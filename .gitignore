@@ -2,3 +2,15 @@
 .Rhistory
 .RData
 .Ruserdata
+*.Rproj
+*.RData
+*.tex
+*.aux
+*.out
+*.gz
+*.toc
+*.log
+*.model
+*.html
+*.xlsx
+.DS_Store
