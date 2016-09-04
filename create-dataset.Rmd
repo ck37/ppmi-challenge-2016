@@ -1,0 +1,128 @@
+```{r init}
+source("lib/function_library.R", echo=F)
+
+# Load other R source files in the lib directory.
+load_all_code("lib")
+
+# Load a bunch of required packages, installing missing ones as needed.
+load_all_packages(auto_install = T)
+
+# Set some standard settings.
+conf = list(data_dir = "data")
+```
+
+```{r}
+load(paste0(conf$data_dir, "/merge-data.RData"))
+
+# Restrict to PD patients?
+table(data$apprdx)
+# Apprdx = 1 are the PD cohort, 423 observations.
+data = subset(data, apprdx == 1)
+nrow(data)
+
+# Across subscores, find the minimum number of repeated measures for each patient.
+min_updrs_records = apply(data[, c("updrs1_records", "updrs2_records", "updrs3_records", "updrs4_records")], MARGIN=1, FUN=min)
+table(min_updrs_records)
+
+# Restrict to patients for whom we have at least two measurements for each
+# UPDRS table, allowing us to compute progression.
+# If the person has only 1 measurement for at least one subscore then we can't
+# compute the change in UPRDS to measure progression.
+data = data[min_updrs_records > 1, ]
+rm(min_updrs_records)
+nrow(data)
+                              
+#function(row) {
+#min(row$updrs1_records, row$updrs2_records, row$updrs3_records, row$updrs4_records))
+#})
+
+# Restrict to variables we want to use in our analysis.
+names(data)
+
+# Pull out any outcome variables.
+outcome_vars = c("final_updrs_score_p1", "final_updrs_score_p2", "final_updrs_score_p3", "final_updrs_score_p4", "updrs_total", "final_updrs_total")
+
+# Save the outcome variables to a new df.
+outcome_df = data[, outcome_vars, drop = F]
+
+# Remove the outcome vars from the main df.
+data = data[, setdiff(names(data), outcome_vars)]
+dim(data)
+rm(outcome_vars)
+
+# Other variables to exclude.
+exclude_vars = c("rec_id", "patno", "enrolldt", "birthdt", "consntdt_rand", "consntdt_screen", "prjenrdt", "pddxdt", "updrs1_records", "updrs2_records", "updrs3_records", "updrs4_records", "othneuro")
+
+# TEMPORARY: remove the two factor variables for now.
+exclude_vars = c(exclude_vars, "condcat", "socabbr1")
+
+# Exclude this other vector of variables.
+data = data[, setdiff(names(data), exclude_vars)]
+rm(exclude_vars)
+
+# Convert strings to factors.
+# This is not working right now.
+if (F) {
+  data = sapply(data, FUN=function(col) {
+    if (is.character(col)) {
+      col = as.factor(col)
+    }
+    col
+  })
+}
+
+# Confirm that we have no string columns.
+if (sum(sapply(data, is.character)) != 0) {
+  cat("Error: string columns need to be removed or converted.\n")
+  str(data[ sapply(data, is.character)])
+  stop()
+}
+
+# How many factor columns do we have?
+if (sum(sapply(data, is.factor)) != 0) {
+   str(data[ sapply(data, is.factor)])
+}
+
+# Create missingness indicators and impute missing data.
+# This should not generate any warnings, but if it does then there are probably
+# character columns remaining that need to be resolved.
+data = ckTools::impute_missing_values(data)
+dim(data)
+
+str(data, list.len = ncol(data))
+
+# Remove zero variance (constant) and near-zero-variance columns.
+preproc = caret::preProcess(data, method = c("zv", "nzv"))
+# This presumably removes a bunch of the missingness indicators.
+data = predict(preproc, data)
+dim(data)
+rm(preproc)
+
+# Convert factors to binary indicators. (e.g. via model.matrix)
+# Not using this right now, we just removed the two factors above.
+if (F) {
+  X = model.matrix(~ ., data)
+  dim(X)
+}
+
+# Create true progression outcome.
+outcome_df$progression = outcome_df$final_updrs_total - outcome_df$updrs_total
+hist(outcome_df$progression)
+summary(outcome_df$progression)
+
+# Remove records where progression is NA.
+defined_outcome = !is.na(outcome_df$progression)
+outcome_df = outcome_df[defined_outcome, ]
+data = data[defined_outcome, ]
+rm(defined_outcome)
+
+# Create list containing X and Y data.
+dataset = list(X = data, outcomes = outcome_df)
+rm(data, outcome_df)
+
+# Final covariate dimensions.
+dim(dataset$X)
+
+# Save a cleaned dataset for prediction.
+save(dataset, file=paste0(conf$data_dir, "/create-dataset.RData"))
+```

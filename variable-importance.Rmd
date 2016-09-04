@@ -1,0 +1,290 @@
+```{r init}
+source("lib/function_library.R", echo=F)
+
+# Load other R source files in the lib directory.
+load_all_code("lib")
+
+# Load a bunch of required packages, installing missing ones as needed.
+load_all_packages(auto_install = T)
+
+# Set some standard settings.
+conf = list(dir = ".",
+            data_dir = "data",
+            tex_dir = "tex",
+            verbose = F)
+```
+
+```{r analysis-setup}
+# Setup multinode processing if available.
+# Just use multicore for now.
+conf$cluster = ckTools::parallelize(allow_multinode=F)
+
+#conf$method = "method.AUC"
+conf$method = "method.NNLS"
+
+# conf$outer_cv_folds = 10
+conf$outer_cv_folds = 20
+conf$cv_folds = 10
+
+# If the cluster object is null it means we're setup for multicore (or nuthin).
+if (is.null(conf$cluster) || is.na(conf$cluster)) {
+  # Use non-CV if we're running this in RStudio on a laptop.
+  if (.Platform$GUI == "RStudio") {
+    fn = "sl_fn"
+  } else {
+    fn = "cv_sl_fn"
+  }
+  if (T) { 
+    # Multicore version.
+    conf$sl_fn = ckTools::gen_superlearner(parallel = "multicore",
+                  outer_cv_folds = conf$outer_cv_folds)[[fn]]
+  } else {
+    # Sequential version.
+    conf$sl_fn = SuperLearner
+  }
+  rm(fn)
+} else {
+  # Multinode version.
+  conf$sl_fn = ckTools::gen_superlearner(parallel = "snow",
+                  cluster = conf$cluster,
+                  outer_cv_folds = conf$outer_cv_folds)$cv_sl_fn
+}
+
+load(paste0(conf$data_dir, "/create-dataset.RData"))
+
+X = dataset$X
+Y = dataset$outcomes$progression
+
+```
+
+## VarImpact() analysis (broken right now)
+
+```{r analysis, error=T, eval=F}
+# This block is currently generating an error, but continue to later blocks.
+
+library(varImpact)
+
+if (foreach::getDoParName() == "doSNOW") {
+  # Set multinode-compatible seed.
+  clusterSetRNGStream(conf$cluster, iseed = 1)
+} else {
+  # Set multicore-compatible seed.
+  set.seed(1, "L'Ecuyer-CMRG")
+}
+
+
+Q_lib = c("SL.glmnet", "SL.earth", "SL.mean", "SL.xgboost", "SL.stepAIC", "SL.randomForest", "SL.bayesglm")#, "SL.gam", "SL.rpartPrune", "SL.bartMachine")
+# g_lib = c("SL.stepAIC", "SL.mean")
+g_lib = c("SL.glmnet", "SL.mean")
+
+# V is expected to be 2 by default. Eventually support larger Vs.
+V = 2
+minCell = 0
+minYs = 15
+
+# X minutes on 4 cores; X minutes on 24 cores; X minutes on 96 cores.
+# NOT working right now :/ Need to investigate.
+vim = varImpact(Y, X, V=V, g.library=g_lib, Q.library=Q_lib,
+                minCell=minCell, family = gaussian(), minYs = minYs,
+                verbose=conf$verbose)
+vim$time
+vim
+vim$results_all
+exportLatex(vim, outname = "vim_", dir = paste0(conf$tex_dir, "/"))
+
+
+save(vim, conf, dataset,
+     file=paste0(conf$data_dir, "/varimpact_analysis.RData"))
+```
+
+## RandomForest benchmark
+
+```{r rf}
+set.seed(1)
+
+# We shold use the best mtry based on the CV.SL results from the final prediction library.
+# Takes about 45 seconds.
+# TODO: run multicore to be super fast.
+rf_time = system.time({
+  rf = randomForest(X, Y, ntree = 3000, #mtry = 98, 
+                  importance=T, keep.inbag = T, keep.forest = T)
+})
+rf_time
+
+rf_imp = importance(rf)
+
+# Classification metric
+if (F)  {
+  target_metric = "MeanDecreaseAccuracy"
+  metric_name = "Mean Decrease Accuracy"
+  rf_metric = "err.rate"
+  metric = rf[[rf_metric]][, 1]
+  ratio = 10000
+} else {
+  # Regression metric
+  target_metric = "%IncMSE"
+  metric_name = "Pct Increase MSE" # (when randomly permuted)
+  rf_metric = "mse"
+  metric = log(rf[[rf_metric]])
+  # MSE scale
+  # ratio = 5
+  # Log MSE
+  ratio = 3000
+}
+
+# Sort by descending importance.
+rf_imp = rf_imp[order(rf_imp[, target_metric], decreasing=T), ]
+
+print_imp = as.data.frame(rf_imp[1:30, target_metric, drop=F])
+
+colnames(print_imp) = c(metric_name)
+
+print_imp$var = rownames(print_imp)
+colnames(print_imp)
+
+# Add in longer variable names.
+codes = get_codebook()
+colnames(codes)
+
+#print_imp2 = merge(print_imp, codes, by.x = "var", by.y = "field_name", all.x=T)
+print_imp2 = dplyr::left_join(print_imp, codes, by = c("var" = "field_name"), copy = T)
+print_imp2
+
+# Add ranking to the rownames.
+print_imp2$var = paste0(1:nrow(print_imp2), ". ", print_imp2$var)
+
+colnames(print_imp2)[2:3] = c("Variable", "Description")
+
+print_imp2 = print_imp2[, c("Variable", metric_name, "Description")]
+
+print(xtable(print_imp2, align="llrl",
+             caption="Variable importance via RandomForest"),
+      type="latex", file=paste0(conf$tex_dir, "/vim_rf.tex"),
+      include.rownames = F)
+
+if (F) {
+  # Classification
+  
+  # Get OOB AUC.
+  pred_rocr = ROCR::prediction(rf$votes[, "1"], Y)
+  perf = ROCR::performance(pred_rocr, "tpr", "fpr")
+  rf_auc = ROCR::performance(pred_rocr, measure = "auc", x.measure = "cutoff")@y.values[[1]]
+  rf_perf = rf_auc
+} else {
+  # Regression.
+  rf_perf = metric[rf$ntree]
+}
+
+# Final accuracy with the maximum number of trees:
+rf_perf
+
+# Plot of error rate across ntrees with out of bag data.
+qplot(1:rf$ntree, metric,
+      main="Random Forest performance on out-of-bag data (VIM)",
+      ylab = "Performance", xlab = "Number of trees", geom="line") +
+      theme_bw() + coord_fixed(ratio=ratio)
+ggsave(paste0(conf$dir, "/visuals/vim-rf-perf-by-trees.png"))
+
+if (F) {
+  library(forestFloor)
+  ff = forestFloor(rf, data, calc_np = T, binary_reg = T)
+  # Color by most important feature.
+  Col = fcol(ff, 1) 
+  plot(ff, col=Col)
+}
+
+save(rf, rf_imp, rf_perf, file=paste0(conf$data_dir, "/vim_rf.RData"))
+
+```
+
+
+## Conditional Forest benchmark
+
+```{r cforest}
+
+##################################
+## Compare to cforest.
+
+# Use a different seed from RF analysis.
+# TODO: set multicore/multinode seed.
+set.seed(2)
+ntree = 3000
+mtry = max(floor(ncol(X) / 3), 1)
+mtry
+controls = controls = party::cforest_unbiased(ntree = ntree, mtry = mtry)
+
+cf_time = system.time({
+  cf = party::cforest(Y ~ ., data = data.frame(Y=Y, X), controls = controls)
+})
+cf_time
+
+# Estimate OOB predictions.
+pred = predict(cf, OOB=T)
+summary(pred)
+
+# Conditional is much slower and uses too much ram, so skipping for now.
+# May we worth trying on Savio.
+# We use the AUC version because it may be more accurate with class imbalance.
+if (F) {
+  # Classification
+  cf_imp = party::varimpAUC(cf, conditional=F)
+  print(cf_imp[order(cf_imp, decreasing=T)][1:10])
+  
+  # Calculate AUC.
+  rocr_pred = ROCR::prediction(pred, Y)
+  perf = ROCR::performance(rocr_pred, "tpr", "fpr")
+  cf_auc = ROCR::performance(rocr_pred, measure = "auc", x.measure = "cutoff")@y.values[[1]]
+  # Not as strong as normal RF :/
+  cf_perf = cf_auc
+  
+  metric_name = "Mean Decrease AUC"
+} else {
+  # Regression.
+  cf_imp = party::varimp(cf, conditional=F)
+  
+  metric_name = "MSE"
+ 
+  # TODO: extract performance from CF regression. 
+  cf_perf = NA
+}
+
+# Convert from a vector to a matrix.
+print_cfimp = as.data.frame(as.matrix(cf_imp[order(cf_imp, decreasing=T)][1:30], ncol=1))
+colnames(print_cfimp) = c(metric_name)
+
+print_cfimp$var = rownames(print_cfimp)
+
+# Add in longer variable names.
+codes = get_codebook()
+colnames(codes)
+
+print_cfimp2 = dplyr::left_join(print_cfimp, codes, by = c("var" = "field_name"), copy = T)
+
+print_cfimp2
+
+# Add ranking to the rownames.
+print_cfimp2$var = paste0(1:nrow(print_cfimp2), ". ", print_cfimp$var)
+
+rownames(print_cfimp2) = NULL
+names(print_cfimp2)[2:3] = c("Variable", "Description")
+
+# Re-order fields.
+print_cfimp2 = print_cfimp2[, c("Variable", metric_name, "Description")]
+
+print(xtable(print_cfimp2, align="llrl",
+             caption="Variable importance via Conditional Forest",
+             digits=4),
+      type="latex", file=paste0(conf$tex_dir, "/vim_cf.tex"), digits=4,
+      include.rownames = F)
+
+save(cf, cf_imp, cf_perf, file=paste0(conf$data_dir, "/vim_cforest.RData"))
+```
+
+
+## Stepwise GLM benchmark
+
+To be added.
+
+## Elastic Net benchmark
+
+To be added.

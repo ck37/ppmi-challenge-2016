@@ -1,0 +1,396 @@
+```{r init}
+source("lib/function_library.R", echo=F)
+
+# Load other R source files in the lib directory.
+load_all_code("lib")
+
+# Load a bunch of required packages, installing missing ones as needed.
+# NOTE: may need to run manually once if there are packages to install
+# and there isn't a default CRAN mirror specified.
+load_all_packages(auto_install = T)
+
+# Set some standard settings.
+conf = list(inbound_dir = "inbound/download-2016-09-03",
+            data_dir = "data")
+```
+
+```{r load-data, error=F}
+
+####################################
+# Import CSVs.
+
+# This loads all of the CVS into a list, with the filename as the
+# name for each list item. This takes a few seconds to run.
+cache_file = paste0(conf$data_dir, "/import-csvs.RData")
+if (!file.exists(cache_file)) {
+  files = import_csvs(conf$inbound_dir)
+  # Save the result so that we can just load the RData file after the first
+  # time we import.
+  save(files, file = cache_file)
+} else {
+  load(cache_file)
+}
+rm(cache_file)
+
+names(files)
+
+
+####################################
+# From PPMI_Data_Challenge-Dataset_Overview_and_FAQ.pdf --
+# Finding enrolled subjects
+# o Need two tables: SCREEN (Screening/Demographics) and RANDOM (Randomization table)
+# o Enrolled subjects must appear in both tables
+# o Enrolled subjects must also have a non-missing enrollment date
+#     (ENROLLDT from the RANDOM table)
+
+# Clean up screening table.
+screen = clean_screening(files$screening___demographics)
+names(screen)
+dim(screen)
+
+# Clean up the randomization table.
+rand = clean_randomization(files$randomization_table)
+names(rand)
+dim(rand)
+
+# Merge two tables based on patient number (primary key); could add gender as a 
+# backup field. Data will be our primary dataframe with all of the merged data.
+# We should get 1,323 merged observations.
+data = dplyr::left_join(rand, screen, by = "patno", suffix = c("_rand", "_screen"))
+dim(data)
+colnames(data)
+
+# This is our baseline number of observations. All future merges should maintain
+# this this count.
+expected_rows = nrow(data)
+
+# Clean up.
+rm(screen, rand)
+
+# Confirm no excluded or declined individuals remain in the merged dataframe.
+# Check for excluded individuals.
+table(data$excluded, useNA="ifany")
+
+# Check for declined individuals
+table(data$declined, useNA="ifany")
+
+# Now we can remove those fields to keep the variable list simpler.
+data = subset(data, select = -c(excluded, declined))
+
+# Key variable: APPRDX - appropriate diagnosis.
+head(data$apprdx)
+table(data$apprdx, useNA="ifany")
+table(data$current_apprdx, useNA="ifany")
+
+
+################################
+# Merge in other important tables here.
+
+# Looking through Study Docs/ PPMI_Derived_Variable_Definitions_and_Score_Calculations.pdf
+
+# famhxpd - family history of PD
+fam_hist = clean_family_history(files$family_history__pd_)
+names(fam_hist)
+dim(fam_hist)
+data = dplyr::left_join(data, fam_hist, by = "patno")
+# Ensure we aren't adding multiple observations for a given patient.
+stopifnot(nrow(data) == expected_rows)
+rm(fam_hist)
+
+# pdfeat - duration of disease
+pd_features = clean_pd_features(files$pd_features)
+names(pd_features)
+data = dplyr::left_join(data, pd_features, by = "patno")
+# Ensure we aren't adding multiple observations for a given patient.
+stopifnot(nrow(data) == expected_rows)
+rm(pd_features)
+
+# Create a disease duration variable, with scale = days.
+# This is recommended in the overview PDF from PPMI.
+data$disease_duration = as.numeric(data$enrolldt - data$pddxdt)
+summary(data$disease_duration)
+hist(data$disease_duration)
+
+# Prodromal diagnostic questionnaire.
+prodromal_dq = clean_prodromal_dq(files$prodromal_diagnostic_questionnaire)
+names(prodromal_dq)
+data = dplyr::left_join(data, prodromal_dq, by = "patno")
+table(data$primdiag)
+# Ensure we aren't adding multiple observations for a given patient.
+stopifnot(nrow(data) == expected_rows)
+rm(prodromal_dq)
+
+# General medical history.
+genmedical_hx = clean_genmedical_hx(files$general_medical_history)
+names(genmedical_hx)
+data = dplyr::left_join(data, genmedical_hx, by = "patno")
+# Ensure we aren't adding multiple observations for a given patient.
+stopifnot(nrow(data) == expected_rows)
+rm(genmedical_hx)
+
+# UPDRS pt 1 and pt 1 patient.
+updrs1 = clean_updrs1_both(files$mds_updrs_part_i,
+                      files$mds_updrs_part_i__patient_questionnaire)
+names(updrs1)
+data = dplyr::left_join(data, updrs1, by = "patno")
+# Ensure we aren't adding multiple observations for a given patient.
+stopifnot(nrow(data) == expected_rows)
+rm(updrs1)
+
+# UPDRS pt 2
+updrs2 = clean_updrs2(files$mds_updrs_part_ii__patient_questionnaire)
+names(updrs2)
+data = dplyr::left_join(data, updrs2, by = "patno")
+# Ensure we aren't adding multiple observations for a given patient.
+stopifnot(nrow(data) == expected_rows)
+rm(updrs2)
+
+# UPDRS pt 3 post-dose
+updrs3 = clean_updrs3(files$mds_updrs_part_iii__post_dose_)
+names(updrs3)
+data = dplyr::left_join(data, updrs3, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(updrs3)
+
+# CLINDX
+clindx = clean_clindx(files$clinical_diagnosis_and_management)
+names(clindx)
+data = dplyr::left_join(data, clindx, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(clindx)
+
+# COGCATG
+cogcatg = clean_cogcatg(files$cognitive_categorization)
+names(cogcatg)
+data = dplyr::left_join(data, cogcatg, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(cogcatg)
+
+# CONMED
+conmed = clean_conmed(files$concomitant_medications)
+names(conmed)
+data = dplyr::left_join(data, conmed, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(conmed)
+
+# CURRCOND
+currcond = clean_currcond(files$current_medical_conditions_log)
+names(currcond)
+data = dplyr::left_join(data, currcond, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(currcond)
+
+# DATSCAN
+if (F) {
+  # Run manually until this is working.
+  datscan = clean_datscan(files$datscan_analysis)
+  names(datscan)
+  data = dplyr::left_join(data, datscan, by = "patno")
+  stopifnot(nrow(data) == expected_rows)
+  rm(datscan)
+}
+
+# Depression scale (GDSSHORT)
+gdsshort = clean_depressionscale(files$geriatric_depression_scale__short_)
+names(gdsshort)
+data = dplyr::left_join(data, gdsshort, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(gdsshort)
+
+
+# DIAGFEAT
+diagfeat = clean_diagfeat(files$diagnostic_features)
+names(diagfeat)
+data = dplyr::left_join(data, diagfeat, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(diagfeat)
+
+# EPWORTH
+epworth = clean_epworth(files$epworth_sleepiness_scale)
+names(epworth)
+data = dplyr::left_join(data, epworth, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(epworth)
+
+# HVLT
+hvlt = clean_hvlt(files$hopkins_verbal_learning_test)
+names(hvlt)
+data = dplyr::left_join(data, hvlt, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(hvlt)
+
+# UPSIT
+upsit = clean_upsit(files$university_of_pennsylvania_smell_id_test)
+names(upsit)
+data = dplyr::left_join(data, upsit, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(upsit)
+
+# KINETICS
+if (F) {
+  # Run manually until this is working.
+  kinetics = clean_kinetics(files$tap_pd_kinetics_device_testing)
+  names(kinetics)
+  data = dplyr::left_join(data, kinetics, by = "patno")
+  stopifnot(nrow(data) == expected_rows)
+  rm(kinetics)
+}
+
+# LINEORNT
+lineornt = clean_lineornt(files$benton_judgment_of_line_orientation)
+names(lineornt)
+data = dplyr::left_join(data, lineornt, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(lineornt)
+
+# LNSPD
+lnspd = clean_lnspd(files$`letter_-_number_sequencing__pd_`)
+names(lnspd)
+data = dplyr::left_join(data, lnspd, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(lnspd)
+
+# LUMBAR
+lumbar = clean_lumbar(files$lumbar_puncture_sample_collection)
+names(lumbar)
+data = dplyr::left_join(data, lumbar, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(lumbar)
+
+# MOCA
+moca = clean_moca(files$montreal_cognitive_assessment__moca_)
+names(moca)
+data = dplyr::left_join(data, moca, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(moca)
+
+# MODSEADL
+modseadl = clean_modseadl(files$'modified_schwab_+_england_adl')
+names(modseadl)
+data = dplyr::left_join(data, modseadl, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(modseadl)
+
+# MRI
+mri = clean_mri(files$magnetic_resonance_imaging)
+names(mri)
+data = dplyr::left_join(data, mri, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(mri)
+
+# UPDRS4
+updrs4 = clean_updrs4(files$mds_updrs_part_iv)
+names(updrs4)
+data = dplyr::left_join(data, updrs4, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(updrs4)
+
+# PASEHSWK
+pasehswk = clean_pasehswk(files$`pase_-_household_activity`)
+names(pasehswk)
+data = dplyr::left_join(data, pasehswk, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(pasehswk)
+
+#PASELS
+pasels = clean_pasels(files$`pase_-_leisure_time_activity`)
+names(pasels)
+data = dplyr::left_join(data, pasels, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(pasels)
+
+# MUTRSLT
+mutrslt = clean_gentest_results(files$genetic_testing_results)
+names(mutrslt)
+dim(mutrslt)
+data = dplyr::left_join(data, mutrslt, by = "patno")
+# Ensure we aren't adding multiple observations for a given patient.
+stopifnot(nrow(data) == expected_rows)
+rm(mutrslt)
+
+# PDMEDUSE
+pdmeduse = clean_pdmeduse(files$use_of_pd_medication)
+names(pdmeduse)
+dim(pdmeduse)
+data = dplyr::left_join(data, pdmeduse, by = "patno")
+# Ensure we aren't adding multiple observations for a given patient.
+stopifnot(nrow(data) == expected_rows)
+rm(pdmeduse)
+
+# PECN
+pecn = clean_pecn(files$`neurological_exam_-_cranial_nerves`)
+names(pecn)
+dim(pecn)
+data = dplyr::left_join(data, pecn, by = "patno")
+# Ensure we aren't adding multiple observations for a given patient.
+stopifnot(nrow(data) == expected_rows)
+rm(pecn)
+
+# PENEURO
+peneuro = clean_peneuro(files$general_neurological_exam)
+names(peneuro)
+dim(peneuro)
+data = dplyr::left_join(data, peneuro, by = "patno")
+# Ensure we aren't adding multiple observations for a given patient.
+stopifnot(nrow(data) == expected_rows)
+rm(peneuro)
+
+# REMSLEEP
+remsleep = clean_remsleep(files$rem_sleep_disorder_questionnaire)
+names(remsleep)
+dim(remsleep)
+data = dplyr::left_join(data, remsleep, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(remsleep)
+
+# SFT
+sft = clean_sft(files$semantic_fluency)
+names(sft)
+dim(sft)
+data = dplyr::left_join(data, sft, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(sft)
+
+# STAI
+stai = clean_stai(files$`state-trait_anxiety_inventory`)
+names(stai)
+dim(stai)
+data = dplyr::left_join(data, stai, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(stai)
+
+# SRGPD
+srgpd = clean_srgpd(files$surgery_for_parkinson_disease)
+names(srgpd)
+dim(srgpd)
+data = dplyr::left_join(data, srgpd, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(srgpd)
+
+# VITAL
+vital = clean_vital(files$vital_signs)
+names(vital)
+dim(vital)
+data = dplyr::left_join(data, vital, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(vital)
+
+# Calculate final variables with the full merged dataset.
+data = clean_final(data)
+stopifnot(nrow(data) == expected_rows)
+
+################################
+# Review results.
+
+dim(data)
+names(data)
+
+################################
+
+# Clean up.
+#rm(files, expected_rows)
+rm(expected_rows)
+
+# Save our resulting data frame.
+save(data, file = paste0(conf$data_dir, "/merge-data.RData"))
+```

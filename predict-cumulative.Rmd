@@ -1,0 +1,84 @@
+```{r init}
+source("lib/function_library.R", echo=F)
+
+# Load other R source files in the lib directory.
+load_all_code("lib")
+
+# Load a bunch of required packages, installing missing ones as needed.
+load_all_packages(auto_install = T)
+
+# Set some standard settings.
+conf = list(data_dir = "data")
+```
+
+```{r predict-setup}
+# Setup multinode processing if available.
+# Just use multicore for now.
+conf$cluster = ckTools::parallelize(allow_multinode=F)
+
+#conf$method = "method.AUC"
+conf$method = "method.NNLS"
+
+# conf$outer_cv_folds = 10
+conf$outer_cv_folds = 20
+conf$cv_folds = 10
+
+# If the cluster object is null it means we're setup for multicore (or nuthin).
+if (is.null(conf$cluster) || is.na(conf$cluster)) {
+  # Use non-CV if we're running this in RStudio on a laptop.
+  if (.Platform$GUI == "RStudio") {
+    fn = "sl_fn"
+  } else {
+    fn = "cv_sl_fn"
+  }
+  if (T) { 
+    # Multicore version.
+    conf$sl_fn = ckTools::gen_superlearner(parallel = "multicore",
+                  outer_cv_folds = conf$outer_cv_folds)[[fn]]
+  } else {
+    # Sequential version.
+    conf$sl_fn = SuperLearner
+  }
+  rm(fn)
+} else {
+  # Multinode version.
+  conf$sl_fn = ckTools::gen_superlearner(parallel = "snow",
+                  cluster = conf$cluster,
+                  outer_cv_folds = conf$outer_cv_folds)$cv_sl_fn
+}
+```
+
+```{r predict}
+load(paste0(conf$data_dir, "/create-dataset.RData"))
+
+# Use L'Ecuyer for multicore seeds; see ?set.seed for details.
+set.seed(1, "L'Ecuyer-CMRG") 
+# TODO: set multinode seed if needed.
+
+X = dataset$X
+Y = dataset$outcomes$progression
+
+libs = cumulative_library_seq(dim(X), type = "regression", glm=F)
+length(libs)
+
+results = fit_model_libs(Y, X, libs,
+                         family=gaussian(), sl_fn = conf$sl_fn,
+                         cv_folds = conf$cv_folds)
+
+save(results, libs, conf, dataset,
+     file=paste0(conf$dir, "/data/predict_results.RData"))
+```
+
+Process results.
+
+```{r predict-results}
+load(file=paste0(conf$dir, "/data/predict_results.RData"))
+
+# Create plots and generate tables for all results.
+# TODO: update this function to support RMSE rather than AUC as the metric.
+plot_all_results(results, dataset$outcomes$progresson, "PD", libs,
+                 type = "regression",
+                 plot_dir = paste0(conf$dir, "/visuals/"),
+                 tex_dir = paste0(conf$dir, "/tex/"))
+
+```
