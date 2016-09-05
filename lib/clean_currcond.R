@@ -30,6 +30,15 @@ clean_currcond = function(df) {
     View(subset(dupes, pat_dupes > 1))
   }
 
+
+  ################################
+  # Remove fields that we don't want to keep.
+  df = subset(df, select = -c(rec_id, f_status, event_id, pag_name, seqno,
+                              dxyrest, condterm, orig_entry, last_update, query, site_aprv,
+                             resyr, llt_name, pt_code, pt_name, verbatim,
+                              vmeddra, hlt_name, hlgtname))
+
+
   ################################
   # Clean up important variables.
 
@@ -39,27 +48,22 @@ clean_currcond = function(df) {
   # System organ class 1
   df$socabbr1[df$socabbr1 == ""] = NA
   df$socabbr1 = as.factor(df$socabbr1)
-  # NOTE: we probably want to reshape this to some extent.
-
-
   ################################
-  # Ensure only one observation per patient.
 
-  # Keep the first (earliest) record for each patient.
-  df = df %>% group_by(patno) %>% arrange(rec_id) %>% filter(row_number() == 1)
+    # reshape wide by  condcat
+  df <- reshape(df, timevar = c("condcat"), idvar = c("patno"),
+                direction = "wide")
 
-  # This subsets to the first row for each patient, which may not be the best
-  # row choice. However this ensures that we don't join multiple results for a
-  # patient to our main data frame. Ideally we would figure out which row is
-  # best for a given patient.
-  # df = df %>% distinct(patno, .keep_all = T)
+  dim(df)
 
-  ################################
-  # Remove fields that we don't want to keep.
-  df = subset(df, select = -c(rec_id, f_status, event_id, pag_name, seqno,
-                              dxyrest, condterm, orig_entry, last_update, query, site_aprv,
-                              resolvd, resyr, llt_name, pt_code, pt_name, verbatim,
-                              vmeddra, hlt_name, hlgtname))
+##still need to get this working
+# need to make these all indicator variables
+#for (i in  c(socabbr1.1P, socabbr1.1E)) {
+   # i[ is.na(i) ] <- 0
+    #i[]}
+
+
+
 
   ################################
   # Return the cleaned result.

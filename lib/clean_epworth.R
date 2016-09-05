@@ -1,6 +1,5 @@
 #' @param df The input dataframe from the CSVs.
 
-
 clean_epworth = function(df) {
 
   ################################
@@ -12,7 +11,7 @@ clean_epworth = function(df) {
     str(df)
 
     # Is there duplication at the patient level? Check # of records per patient id.
-    dupes = df %>% group_by(patno) %>% summarize(pat_dupes=n())
+    dupes = df %>% group_by(patno) %>% dplyr::summarize(pat_dupes=n())
     # Review duplication by patient (grouped):
     table(dupes$pat_dupes)
     # Unique patients:
@@ -30,20 +29,21 @@ clean_epworth = function(df) {
     View(subset(dupes, pat_dupes > 1))
   }
 
+  ################################
+  # Derived variables.
 
+  # Epworth sleepiness scale.
+  df$epworth_sleepiness = rowSums(df[, paste0("ess", 1:8)], na.rm=T)
+  hist(df$epworth_sleepiness)
 
+  df$epworth_is_sleepy = 1*(df$epworth_sleepiness >= 10)
+  table(df$epworth_is_sleepy, useNA="ifany")
 
   ################################
   # Ensure only one observation per patient.
 
   # Keep the first (earliest) record for each patient.
-  df = df %>% group_by(patno) %>% arrange(rec_id) %>% filter(row_number() == 1)
-
-  # This subsets to the first row for each patient, which may not be the best
-  # row choice. However this ensures that we don't join multiple results for a
-  # patient to our main data frame. Ideally we would figure out which row is
-  # best for a given patient.
-  # df = df %>% distinct(patno, .keep_all = T)
+  df = df %>% group_by(patno) %>% arrange(rec_id) %>% filter(event_id == "BL")
 
   ################################
   # Remove fields that we don't want to keep.

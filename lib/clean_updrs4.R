@@ -8,6 +8,7 @@ clean_updrs4 = function(df) {
     dim(df)
     names(df)
     str(df)
+    table(df$event_id)
 
     # Is there duplication at the patient level? Check # of records per patient id.
     dupes = df %>% group_by(patno) %>% summarize(pat_dupes=n())
@@ -33,26 +34,30 @@ clean_updrs4 = function(df) {
   summary(df$updrs_score_p4)
   hist(df$updrs_score_p4)
 
-
   # Save the latest UPDRS part 4 combined score, as well as the # of UPDRS4
   # records each patient has.
   df = df %>% group_by(patno) %>% arrange(rec_id) %>%
     mutate(final_updrs_score_p4  = last(updrs_score_p4),
            updrs4_records = n())
 
-
   ################################
   # Ensure only one observation per patient.
 
   # Keep the first (earliest) record for each patient.
+  # CK: this is really breaking the data for some reason, disabling for now.
+  # df = df %>% group_by(patno) %>% filter(event_id == "BL")
+  # TODO: check this part see if we can go back to a baseline restriction or
+  # something along those lines.
   df = df %>% group_by(patno) %>% arrange(rec_id) %>% filter(row_number() == 1)
 
   ################################
   #  fields that we want to keep.
-  df = subset(df,select = c(patno, np4wdysk, np4dyski, np4off,
+  df = subset(df, select = c(patno, np4wdysk, np4dyski, np4off,
                              np4flcti, np4flctx, np4dystn, updrs_score_p4,
                             updrs4_records, final_updrs_score_p4))
 
+  summary(df)
+  table(df$updrs4_records, useNA="ifany")
 
   ################################
   # Return the cleaned result.

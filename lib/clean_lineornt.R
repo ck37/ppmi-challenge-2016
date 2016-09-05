@@ -1,7 +1,7 @@
 #' @param df The input dataframe from the CSVs.
 
 clean_lineornt = function(df) {
-  
+
   ################################
   # Manual review.
   if (F) {
@@ -9,7 +9,7 @@ clean_lineornt = function(df) {
     dim(df)
     names(df)
     str(df)
-    
+
     # Is there duplication at the patient level? Check # of records per patient id.
     dupes = df %>% group_by(patno) %>% summarize(pat_dupes=n())
     # Review duplication by patient (grouped):
@@ -24,30 +24,32 @@ clean_lineornt = function(df) {
     # Review records with duplication, looking at key administrative fields.
     subset(dupes, pat_dupes > 1, c(patno, pat_dupes, event_id, f_status,
                                    orig_entry, last_update, site_aprv))
-    
+
     # Visually review full data that has duplication.
     View(subset(dupes, pat_dupes > 1))
   }
-  
-  
-  
-  
+
+  ################################
+  # Derived variables.
+
+  # Benton Judgment of Line Orientation Score
+  col_names = paste0("bjlot", 1:30)
+  df$benton_score = rowSums(df[, col_names], na.rm=T)
+  hist(df$benton_score)
+  if (F) {
+    summary(df$benton_score)
+  }
+
   ################################
   # Ensure only one observation per patient.
-  
-  # Keep the first (earliest) record for each patient.
-  df = df %>% group_by(patno) %>% arrange(rec_id) %>% filter(row_number() == 1)
-  
-  # This subsets to the first row for each patient, which may not be the best
-  # row choice. However this ensures that we don't join multiple results for a
-  # patient to our main data frame. Ideally we would figure out which row is
-  # best for a given patient.
-  # df = df %>% distinct(patno, .keep_all = T)
-  
+
+  # Keep the BASELINE record for each patient.
+  df = df %>% group_by(patno) %>% arrange(rec_id) %>% filter(event_id %in% c("BL", "SCBL"))
+
   ################################
   # Remove fields that we don't want to keep.
-  df = subset(df, select = c(patno, jlo_totcalc, dvs_jlo_mssae))
-  
+  df = subset(df, select = c(patno, jlo_totcalc, dvs_jlo_mssae, benton_score))
+
   ################################
   # Return the cleaned result.
   df

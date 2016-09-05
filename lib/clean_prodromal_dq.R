@@ -34,14 +34,8 @@ clean_prodromal_dq = function(df) {
   ################################
   # Ensure only one observation per patient.
 
-  # Keep the first (earliest) record for each patient.
-  df = df %>% group_by(patno) %>% arrange(rec_id) %>% filter(row_number() == 1)
-
-  # This subsets to the first row for each patient, which may not be the best
-  # row choice. However this ensures that we don't join multiple results for a
-  # patient to our main data frame. Ideally we would figure out which row is
-  # best for a given patient.
-  # df = df %>% distinct(patno, .keep_all = T)
+  # Keep BL record for each patient.
+  df = df %>% group_by(patno) %>% arrange(rec_id) %>% filter(event_id == "BL")
 
   ################################
   # Remove fields that we don't want to keep.

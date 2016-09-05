@@ -1,6 +1,5 @@
 #' @param df The input dataframe from the CSVs.
 
-
 clean_cogcatg = function(df) {
 
   ################################
@@ -10,6 +9,15 @@ clean_cogcatg = function(df) {
     dim(df)
     names(df)
     str(df)
+    summary(df)
+
+
+    #clean date
+    df$infodt = as.Date(paste0(df$infodt, "/15"), "%m/%Y/%d")
+    class(df$infodt)
+    head(df$infodt)
+    min(df$infodt)
+    max(df$infodt)
 
     # Is there duplication at the patient level? Check # of records per patient id.
     dupes = df %>% group_by(patno) %>% summarize(pat_dupes=n())
@@ -37,19 +45,13 @@ clean_cogcatg = function(df) {
   # Ensure only one observation per patient.
 
   # Keep the first (earliest) record for each patient.
-  df = df %>% group_by(patno) %>% arrange(rec_id) %>% filter(row_number() == 1)
-
-  # This subsets to the first row for each patient, which may not be the best
-  # row choice. However this ensures that we don't join multiple results for a
-  # patient to our main data frame. Ideally we would figure out which row is
-  # best for a given patient.
-  # df = df %>% distinct(patno, .keep_all = T)
+  df = df %>% group_by(patno) %>% arrange(rec_id) %>% filter(event_id == "BL")
 
   ################################
   # Remove fields that we don't want to keep.
   df = subset(df, select = -c(rec_id, f_status, event_id, pag_name,
-                              infodt, ptcgboth, orig_entry, last_update, 
-                              query, site_aprv, rvwnpsy))
+                              infodt, ptcgboth, orig_entry, last_update,
+                              query, site_aprv))
 
 
   ################################

@@ -11,7 +11,7 @@ load_all_packages = function(auto_install = F) {
            "histogram", "hopach", "ipred", "MASS", "multtest", "parallel", "party",
            "polspline", "qdapTools", "quantreg", "randomForest", "RColorBrewer",
            "rJava", "reader", "readstata13", "readxl", "ROCR",
-           "rpart", "SparseM", "tmle", "xgboost", "xtable")
+           "rpart", "SparseM", "tidyr", "tmle", "xgboost", "xtable")
 
   # Hide the huge amount of startup message text.
   suppressMessages({

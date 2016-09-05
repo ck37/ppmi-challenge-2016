@@ -36,7 +36,7 @@ clean_conmed = function(df) {
   # Ensure only one observation per patient.
   
   # Keep the first (earliest) record for each patient.
-  df = df %>% group_by(patno) %>% arrange(rec_id) %>% filter(row_number() == 1)
+  #df = df %>% group_by(patno) %>% arrange(rec_id) %>% filter(row_number() == 1)
   
   # This subsets to the first row for each patient, which may not be the best
   # row choice. However this ensures that we don't join multiple results for a
@@ -46,7 +46,24 @@ clean_conmed = function(df) {
   
   ################################
   # Remove fields that we don't want to keep.
-  df = subset(df, select = c(patno, dismed, totddose))
+  df = subset(df, select = c(patno, dismed, ledd, totddose))
+  
+  # Make ledd score based on derived variables: 
+  # "To find the LEDD for COMT inhibitors, first find the 
+  # total dose of Levodopa only, and then multiply that value 
+  # by either 0.5 or 0.33 as instructed."
+  df$ledd[grep("x", df$ledd)] = df$totddose[grep("x", df$ledd)] * 0.33
+  df$ledd[df$ledd == ""] = NA
+  df$ledd = as.numeric(df$ledd)
+  
+  # Proportion of meds that are for PD
+  df1 = df %>% group_by(patno) %>% summarise(prop_PDmed = mean(dismed)) 
+  
+  # Mean ledd score
+  df2 = df %>% group_by(patno) %>% summarise(ledd = mean(ledd, na.rm = T))
+  
+  df = inner_join(df1, df2, by = "patno")
+  df$ledd[is.nan(df$ledd)] = NA
   
   ################################
   # Return the cleaned result.

@@ -1,11 +1,11 @@
 #' @param df The input dataframe from the CSVs.
 
-clean_hvlt = function(df) {
+clean_sdm = function(df) {
 
   ################################
   # Manual review.
   if (F) {
-    df = files$hopkins_verbal_learning_test
+    df = files$symbol_digit_modalities
     dim(df)
     names(df)
     str(df)
@@ -29,9 +29,6 @@ clean_hvlt = function(df) {
     View(subset(dupes, pat_dupes > 1))
   }
 
-
-
-
   ################################
   # Ensure only one observation per patient.
 
@@ -40,9 +37,11 @@ clean_hvlt = function(df) {
 
   ################################
   # Remove fields that we don't want to keep.
-  df = subset(df, select = -c(rec_id, f_status, event_id, pag_name,
-                              infodt, hvltvrsn, comm, hvltrt1, hvltrt2, hvltrt3,
-                              hvltfprl, hvltfpun,
+
+  # To restrictive:
+  # df = subset(df, select = c(patno, dvs_lns))
+  df = subset(df, select = -c(rec_id, f_status, event_id, pag_name, infodt,
+                              comm,
                               orig_entry, last_update, query, site_aprv))
 
   ################################

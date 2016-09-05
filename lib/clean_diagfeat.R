@@ -49,8 +49,8 @@ clean_diagfeat = function(df) {
   ################################
   # Ensure only one observation per patient.
 
-  # Keep the first (earliest) record for each patient.
-  df = df %>% group_by(patno) %>% arrange(rec_id) %>% filter(row_number() == 1)
+  # Keep BL for each patient.
+  df = df %>% group_by(patno) %>% arrange(rec_id) %>% filter(event_id == "BL")
 
   ################################
   # Remove fields that we don't want to keep.

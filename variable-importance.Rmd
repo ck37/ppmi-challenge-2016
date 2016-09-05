@@ -11,7 +11,7 @@ load_all_packages(auto_install = T)
 conf = list(dir = ".",
             data_dir = "data",
             tex_dir = "tex",
-            verbose = F)
+            verbose = T)
 ```
 
 ```{r analysis-setup}
@@ -55,12 +55,16 @@ load(paste0(conf$data_dir, "/create-dataset.RData"))
 X = dataset$X
 Y = dataset$outcomes$progression
 
+# These versions don't have imputation or missing value indicators.
+# and are intended for varImpact().
+X_raw = raw_dataset$X
+Y_raw = raw_dataset$outcomes$progression
+
 ```
 
-## VarImpact() analysis (broken right now)
+## VarImpact() analysis (run manually - takes 60+ mins)
 
-```{r analysis, error=T, eval=F}
-# This block is currently generating an error, but continue to later blocks.
+```{r varimpact, error=T, eval=T}
 
 library(varImpact)
 
@@ -74,7 +78,10 @@ if (foreach::getDoParName() == "doSNOW") {
 
 
 Q_lib = c("SL.glmnet", "SL.earth", "SL.mean", "SL.xgboost", "SL.stepAIC", "SL.randomForest", "SL.bayesglm")#, "SL.gam", "SL.rpartPrune", "SL.bartMachine")
+Q_lib = c("SL.glmnet", "SL.mean", "SL.randomForest")#, "SL.bayesglm")#, "SL.gam", "SL.rpartPrune", "SL.bartMachine")
 # g_lib = c("SL.stepAIC", "SL.mean")
+# Super fast:
+Q_lib = c("SL.glmnet", "SL.mean")
 g_lib = c("SL.glmnet", "SL.mean")
 
 # V is expected to be 2 by default. Eventually support larger Vs.
@@ -82,10 +89,12 @@ V = 2
 minCell = 0
 minYs = 15
 
-# X minutes on 4 cores; X minutes on 24 cores; X minutes on 96 cores.
-# NOT working right now :/ Need to investigate.
-vim = varImpact(Y, X, V=V, g.library=g_lib, Q.library=Q_lib,
-                minCell=minCell, family = gaussian(), minYs = minYs,
+#str(X_raw, list.len=ncol(X_raw))
+
+# 33 minutes on 4 cores; X minutes on 24 cores; X minutes on 96 cores.
+#vim = varImpact(Y, X, V=V, g.library=g_lib, Q.library=Q_lib, parallel = T,
+vim = varImpact(Y_raw, X_raw, V=V, g.library=g_lib, Q.library=Q_lib, parallel = T,
+                minCell=minCell, family = "gaussian", minYs = minYs,
                 verbose=conf$verbose)
 vim$time
 vim
@@ -93,7 +102,7 @@ vim$results_all
 exportLatex(vim, outname = "vim_", dir = paste0(conf$tex_dir, "/"))
 
 
-save(vim, conf, dataset,
+save(vim, conf, dataset, raw_dataset,
      file=paste0(conf$data_dir, "/varimpact_analysis.RData"))
 ```
 
@@ -140,11 +149,9 @@ print_imp = as.data.frame(rf_imp[1:30, target_metric, drop=F])
 colnames(print_imp) = c(metric_name)
 
 print_imp$var = rownames(print_imp)
-colnames(print_imp)
 
 # Add in longer variable names.
 codes = get_codebook()
-colnames(codes)
 
 #print_imp2 = merge(print_imp, codes, by.x = "var", by.y = "field_name", all.x=T)
 print_imp2 = dplyr::left_join(print_imp, codes, by = c("var" = "field_name"), copy = T)
@@ -256,7 +263,6 @@ print_cfimp$var = rownames(print_cfimp)
 
 # Add in longer variable names.
 codes = get_codebook()
-colnames(codes)
 
 print_cfimp2 = dplyr::left_join(print_cfimp, codes, by = c("var" = "field_name"), copy = T)
 
@@ -280,11 +286,14 @@ print(xtable(print_cfimp2, align="llrl",
 save(cf, cf_imp, cf_perf, file=paste0(conf$data_dir, "/vim_cforest.RData"))
 ```
 
-
 ## Stepwise GLM benchmark
 
 To be added.
 
 ## Elastic Net benchmark
+
+To be added.
+
+## Univariate correlation benchmark
 
 To be added.

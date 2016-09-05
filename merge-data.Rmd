@@ -105,12 +105,6 @@ data = dplyr::left_join(data, pd_features, by = "patno")
 stopifnot(nrow(data) == expected_rows)
 rm(pd_features)
 
-# Create a disease duration variable, with scale = days.
-# This is recommended in the overview PDF from PPMI.
-data$disease_duration = as.numeric(data$enrolldt - data$pddxdt)
-summary(data$disease_duration)
-hist(data$disease_duration)
-
 # Prodromal diagnostic questionnaire.
 prodromal_dq = clean_prodromal_dq(files$prodromal_diagnostic_questionnaire)
 names(prodromal_dq)
@@ -152,6 +146,13 @@ data = dplyr::left_join(data, updrs3, by = "patno")
 stopifnot(nrow(data) == expected_rows)
 rm(updrs3)
 
+# BIOSPECAN
+bio = clean_biospecimen_analysis(files$biospecimen_analysis_results)
+names(bio)
+data = dplyr::left_join(data, bio, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(bio)
+
 # CLINDX
 clindx = clean_clindx(files$clinical_diagnosis_and_management)
 names(clindx)
@@ -180,15 +181,20 @@ data = dplyr::left_join(data, currcond, by = "patno")
 stopifnot(nrow(data) == expected_rows)
 rm(currcond)
 
-# DATSCAN
-if (F) {
-  # Run manually until this is working.
-  datscan = clean_datscan(files$datscan_analysis)
-  names(datscan)
-  data = dplyr::left_join(data, datscan, by = "patno")
-  stopifnot(nrow(data) == expected_rows)
-  rm(datscan)
-}
+# DATSCAN Analysis
+# Run manually until this is working.
+datscan = clean_datscan_analysis(files$datscan_analysis)
+names(datscan)
+data = dplyr::left_join(data, datscan, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(datscan)
+
+# DATSCAN Imaging
+datscan = clean_datscan_imaging(files$datscan_imaging)
+names(datscan)
+data = dplyr::left_join(data, datscan, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(datscan)
 
 # Depression scale (GDSSHORT)
 gdsshort = clean_depressionscale(files$geriatric_depression_scale__short_)
@@ -227,14 +233,11 @@ stopifnot(nrow(data) == expected_rows)
 rm(upsit)
 
 # KINETICS
-if (F) {
-  # Run manually until this is working.
-  kinetics = clean_kinetics(files$tap_pd_kinetics_device_testing)
-  names(kinetics)
-  data = dplyr::left_join(data, kinetics, by = "patno")
-  stopifnot(nrow(data) == expected_rows)
-  rm(kinetics)
-}
+kinetics = clean_kinetics(files$`tap-pd_kinetics_device_testing`)
+names(kinetics)
+data = dplyr::left_join(data, kinetics, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(kinetics)
 
 # LINEORNT
 lineornt = clean_lineornt(files$benton_judgment_of_line_orientation)
@@ -281,9 +284,11 @@ rm(mri)
 # UPDRS4
 updrs4 = clean_updrs4(files$mds_updrs_part_iv)
 names(updrs4)
+table(updrs4$updrs4_records, useNA="ifany")
 data = dplyr::left_join(data, updrs4, by = "patno")
 stopifnot(nrow(data) == expected_rows)
 rm(updrs4)
+colnames(data)
 
 # PASEHSWK
 pasehswk = clean_pasehswk(files$`pase_-_household_activity`)
@@ -307,6 +312,14 @@ data = dplyr::left_join(data, mutrslt, by = "patno")
 # Ensure we aren't adding multiple observations for a given patient.
 stopifnot(nrow(data) == expected_rows)
 rm(mutrslt)
+
+quipcs = clean_quipcs(files$quip_current_short)
+names(quipcs)
+dim(quipcs)
+data = dplyr::left_join(data, quipcs, by = "patno")
+# Ensure we aren't adding multiple observations for a given patient.
+stopifnot(nrow(data) == expected_rows)
+rm(quipcs)
 
 # PDMEDUSE
 pdmeduse = clean_pdmeduse(files$use_of_pd_medication)
@@ -343,6 +356,22 @@ data = dplyr::left_join(data, remsleep, by = "patno")
 stopifnot(nrow(data) == expected_rows)
 rm(remsleep)
 
+# SCOPA-AUT
+scopa = clean_scopa_aut(files$`scopa-aut`)
+names(scopa)
+dim(scopa)
+data = dplyr::left_join(data, scopa, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(scopa)
+
+# SDM - Symbol Digit Modalities
+sdm = clean_sdm(files$symbol_digit_modalities)
+names(sdm)
+dim(sdm)
+data = dplyr::left_join(data, sdm, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(sdm)
+
 # SFT
 sft = clean_sft(files$semantic_fluency)
 names(sft)
@@ -350,6 +379,14 @@ dim(sft)
 data = dplyr::left_join(data, sft, by = "patno")
 stopifnot(nrow(data) == expected_rows)
 rm(sft)
+
+# SOCIOECO - Socioeconomic status
+ses = clean_socioeco(files$`socio-economics`)
+names(ses)
+dim(ses)
+data = dplyr::left_join(data, ses, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(ses)
 
 # STAI
 stai = clean_stai(files$`state-trait_anxiety_inventory`)
@@ -374,6 +411,15 @@ dim(vital)
 data = dplyr::left_join(data, vital, by = "patno")
 stopifnot(nrow(data) == expected_rows)
 rm(vital)
+
+
+# Hematology
+hema = clean_hematology(files$blood_chemistry___hematology)
+names(hema)
+dim(hema)
+data = dplyr::left_join(data, hema, by = "patno")
+stopifnot(nrow(data)== expected_rows)
+rm(hema)
 
 # Calculate final variables with the full merged dataset.
 data = clean_final(data)

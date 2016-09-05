@@ -9,27 +9,42 @@ clean_depressionscale = function(df) {
     dim(df)
     names(df)
     str(df)
+
+    ################################
+    # Ensure only one observation per patient.
+    # Is there duplication at the patient level? Check # of records per patient id.
+    dupes = df %>% group_by(patno) %>% summarize(pat_dupes=n())
+    # Review duplication by patient (grouped):
+    table(dupes$pat_dupes)
+    # Unique patients:
+    cat("Unique patients:", nrow(dupes),
+        "Duplication %",  round((1 - nrow(dupes) / nrow(df))*100, 2), "\n")
   }
 
   ################################
   # Clean up important variables.
 
+  ################################
+  # Derived variables.
+
+  df$gds_score = with(df,
+    # Add 1 point for each response of “No” (0) to any of the following variables
+    rowSums(cbind(gdssatis, gdsgspir, gdshappy, gdsalive, gdsenrgy) == 0, na.rm=T) +
+    # Add 1 point for each response of “Yes” (1) to any of the following variables:
+    rowSums(cbind(gdsdropd, gdsempty, gdsbored, gdsafrad, gdshlpls, gdshome, gdsmemry, gdswrtls, gdshopls, gdsbeter) == 1, na.rm=T)
+  )
+  hist(df$gds_score)
+
+  if (F) {
+    summary(df$gds_score)
+  }
 
   ################################
   # Ensure only one observation per patient.
-  # Is there duplication at the patient level? Check # of records per patient id.
-  dupes = df %>% group_by(patno) %>% summarize(pat_dupes=n())
-  # Review duplication by patient (grouped):
-  table(dupes$pat_dupes)
-  # Unique patients:
-  cat("Unique patients:", nrow(dupes),
-      "Duplication %",  round((1 - nrow(dupes) / nrow(df))*100, 2), "\n")
 
+  # Keep BL record for each patient.
+  df = df %>% group_by(patno) %>% arrange(rec_id) %>% filter(event_id == "BL")
 
-  # Keep the first (earliest) record for each patient.
-  df = df %>% group_by(patno) %>% arrange(rec_id) %>% filter(row_number() == 1)
-
-  dim(df)
   ################################
   # Remove fields that we don't want to keep.
   df = subset(df, select = -c(rec_id, f_status, event_id, pag_name,

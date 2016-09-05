@@ -5,13 +5,13 @@ source("lib/function_library.R", echo=F)
 load_all_code("lib")
 
 # Load a bunch of required packages, installing missing ones as needed.
-load_all_packages(auto_install = T)
+load_all_packages(auto_install = F)
 
 # Set some standard settings.
 conf = list(data_dir = "data")
 ```
 
-```{r}
+```{r error=F}
 load(paste0(conf$data_dir, "/merge-data.RData"))
 
 # Restrict to PD patients?
@@ -20,9 +20,12 @@ table(data$apprdx)
 data = subset(data, apprdx == 1)
 nrow(data)
 
+c("updrs1_records", "updrs2_records", "updrs3_records", "updrs4_records") %in% names(data)
+summary(data[, c("updrs1_records", "updrs2_records", "updrs3_records", "updrs4_records")])
+
 # Across subscores, find the minimum number of repeated measures for each patient.
 min_updrs_records = apply(data[, c("updrs1_records", "updrs2_records", "updrs3_records", "updrs4_records")], MARGIN=1, FUN=min)
-table(min_updrs_records)
+table(min_updrs_records, useNA="ifany")
 
 # Restrict to patients for whom we have at least two measurements for each
 # UPDRS table, allowing us to compute progression.
@@ -71,6 +74,20 @@ if (F) {
   })
 }
 
+# Create true progression outcome.
+outcome_df$progression = outcome_df$final_updrs_total - outcome_df$updrs_total
+hist(outcome_df$progression)
+summary(outcome_df$progression)
+
+# Remove records where progression is NA.
+defined_outcome = !is.na(outcome_df$progression)
+outcome_df = outcome_df[defined_outcome, ]
+data = data[defined_outcome, ]
+rm(defined_outcome)
+
+
+
+
 # Confirm that we have no string columns.
 if (sum(sapply(data, is.character)) != 0) {
   cat("Error: string columns need to be removed or converted.\n")
@@ -83,13 +100,17 @@ if (sum(sapply(data, is.factor)) != 0) {
    str(data[ sapply(data, is.factor)])
 }
 
-# Create missingness indicators and impute missing data.
-# This should not generate any warnings, but if it does then there are probably
-# character columns remaining that need to be resolved.
-data = ckTools::impute_missing_values(data)
+# Remove factors for now - TODO: handle factors appropriately.
+data = data[, !sapply(data, is.factor)]
 dim(data)
 
-str(data, list.len = ncol(data))
+# Add missingness indicators in a separate step.
+miss_df = ckTools::missingness_indicators(data)
+
+# We are not imputing the values yet, because we don't want the imputed data
+# in the varImpact analysis.
+data = cbind(data, miss_df)
+dim(data)
 
 # Remove zero variance (constant) and near-zero-variance columns.
 preproc = caret::preProcess(data, method = c("zv", "nzv"))
@@ -98,23 +119,25 @@ data = predict(preproc, data)
 dim(data)
 rm(preproc)
 
+# Save a "raw" dataset prior to imputation, for use with varImpact()
+raw_dataset = list(X = data, outcomes = outcome_df)
+
+# Impute missing data. We don't add indicators because those were already added
+# a few lines up.
+# This should not generate any warnings, but if it does then there are probably
+# character columns remaining that need to be resolved.
+data = ckTools::impute_missing_values(data, add_indicators = F)
+dim(data)
+
+str(data, list.len = ncol(data))
+
+
 # Convert factors to binary indicators. (e.g. via model.matrix)
 # Not using this right now, we just removed the two factors above.
 if (F) {
   X = model.matrix(~ ., data)
   dim(X)
 }
-
-# Create true progression outcome.
-outcome_df$progression = outcome_df$final_updrs_total - outcome_df$updrs_total
-hist(outcome_df$progression)
-summary(outcome_df$progression)
-
-# Remove records where progression is NA.
-defined_outcome = !is.na(outcome_df$progression)
-outcome_df = outcome_df[defined_outcome, ]
-data = data[defined_outcome, ]
-rm(defined_outcome)
 
 # Create list containing X and Y data.
 dataset = list(X = data, outcomes = outcome_df)
@@ -124,5 +147,5 @@ rm(data, outcome_df)
 dim(dataset$X)
 
 # Save a cleaned dataset for prediction.
-save(dataset, file=paste0(conf$data_dir, "/create-dataset.RData"))
+save(dataset, raw_dataset, file=paste0(conf$data_dir, "/create-dataset.RData"))
 ```

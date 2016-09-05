@@ -37,7 +37,7 @@ clean_srgpd = function(df) {
   # Ensure only one observation per patient.
   
   # Keep the first (earliest) record for each patient.
-  df = df %>% group_by(patno) %>% arrange(rec_id) %>% filter(row_number() == 1)
+  df = df %>% group_by(patno) %>% arrange(rec_id) %>% filter(event_id == "BL")
   
   # This subsets to the first row for each patient, which may not be the best
   # row choice. However this ensures that we don't join multiple results for a

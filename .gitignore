@@ -13,4 +13,7 @@
 *.model
 *.html
 *.xlsx
+*.zip
+*.png
+*.pdf
 .DS_Store

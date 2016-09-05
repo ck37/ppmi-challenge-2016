@@ -1,14 +1,15 @@
 #' @param df The input dataframe from the CSVs.
 
-clean_hvlt = function(df) {
+clean_datscan_analysis = function(df) {
 
   ################################
   # Manual review.
   if (F) {
-    df = files$hopkins_verbal_learning_test
+    df = files$datscan_analysis
     dim(df)
     names(df)
     str(df)
+    table(df$event_id)
 
     # Is there duplication at the patient level? Check # of records per patient id.
     dupes = df %>% group_by(patno) %>% summarize(pat_dupes=n())
@@ -36,14 +37,12 @@ clean_hvlt = function(df) {
   # Ensure only one observation per patient.
 
   # Keep the first (earliest) record for each patient.
-  df = df %>% group_by(patno) %>% arrange(rec_id) %>% filter(event_id == "BL")
+  df = df %>% group_by(patno) %>% filter(event_id == "SC") %>%
+    filter(row_number() == 1)
 
   ################################
   # Remove fields that we don't want to keep.
-  df = subset(df, select = -c(rec_id, f_status, event_id, pag_name,
-                              infodt, hvltvrsn, comm, hvltrt1, hvltrt2, hvltrt3,
-                              hvltfprl, hvltfpun,
-                              orig_entry, last_update, query, site_aprv))
+  df = subset(df, select = -c(event_id))
 
   ################################
   # Return the cleaned result.
