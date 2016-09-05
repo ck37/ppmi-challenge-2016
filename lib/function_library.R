@@ -5,13 +5,20 @@ load_all_packages = function(auto_install = F) {
   # Output R version so we know which package versions we're using.
   cat(R.version.string, "\n")
 
-  libs = c("arm", "arules", "bartMachine", "caret", "ckTools", "class", "cvAUC",
+  libs = c("arm", "arules", "bartMachine", "caret", "class", "cvAUC",
            "cvTools", "doMC", "doParallel", "doSNOW", "dplyr", "e1071", "earth",
            "foreach", "foreign", "gam", "ggplot2", "glmnet", "gplots", "haven",
            "histogram", "hopach", "ipred", "MASS", "multtest", "parallel", "party",
            "polspline", "qdapTools", "quantreg", "randomForest", "RColorBrewer",
            "rJava", "reader", "readstata13", "readxl", "ROCR",
            "rpart", "SparseM", "tidyr", "tmle", "xgboost", "xtable")
+
+  # NOTE: may want to install the latest xgboost from github.
+  # Can run this manually:
+  if (F && !require("xgboost")) {
+    drat:::addRepo("dmlc")
+    install.packages("xgboost", repos="http://dmlc.ml/drat/", type = "source")
+  }
 
   # Hide the huge amount of startup message text.
   suppressMessages({
