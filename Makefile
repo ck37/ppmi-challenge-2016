@@ -9,7 +9,7 @@ PARTITION=savio2
 
 all: install data analysis
 
-install: install.R
+install: install.R sbatch-install.sh
 	sbatch sbatch-install.sh
 
 #setup: setup-cluster.sh
@@ -22,8 +22,8 @@ create-dataset: merge-data.Rmd create-dataset.Rmd
 
 merge-data: merge-data.Rmd
 	# Could prefix with "nice":
-	#Rscript -e "knitr::knit('merge-data.Rmd')" 2>&1
-	sbatch -A $ACCOUNT -p $PARTITION  -N 1 -t 5:00:00 --wrap "Rscript -e \"knitr::knit('merge-data.Rmd')\" 2>&1"
+	Rscript -e "knitr::knit('merge-data.Rmd')" 2>&1
+	#sbatch -A $ACCOUNT -p $PARTITION  -N 1 -t 5:00:00 --wrap "Rscript -e \"knitr::knit('merge-data.Rmd')\" 2>&1"
 	#Rscript -e "markdown::markdownToHTML('merge-data.md', 'merge-data.html')"
 
 vim: variable-importance.Rmd
