@@ -22,8 +22,8 @@ data: merge-data create-dataset
 create-dataset: merge-data.Rmd create-dataset.Rmd
 	Rscript -e "knitr::knit('create-dataset.Rmd')" 2>&1
 
-merge-data: merge-data.Rmd $OUTPUT_DIR/merge-data.md
-  sbatch ${SCRIPT_DIR}/sbatch-rmd.sh --file=merge-data --dir=$OUTPUT_DIR
+merge-data: merge-data.Rmd ${OUTPUT_DIR}/merge-data.md
+  sbatch ${SCRIPT_DIR}/sbatch-rmd.sh --file=merge-data --dir=${OUTPUT_DIR}
 	# Could prefix with "nice":
 	#Rscript -e "knitr::knit('merge-data.Rmd', 'output/merge-data.md')" 2>&1
 	#sbatch -A $ACCOUNT -p $PARTITION --qos=biostat_normal -N 1 -t 5:00:00 --wrap "Rscript -e \"knitr::knit('merge-data.Rmd')\" 2>&1"
