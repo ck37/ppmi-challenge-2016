@@ -64,7 +64,7 @@ Y_raw = raw_dataset$outcomes$progression
 
 ## VarImpact() analysis (run manually - takes 60+ mins)
 
-```{r varimpact, error=T, eval=T}
+```{r varimpact, error=T, eval=F}
 
 library(varImpact)
 
@@ -89,11 +89,14 @@ V = 2
 minCell = 0
 minYs = 15
 
+# Subset columns randomly.
+X_raw2 = X_raw[, sample(ncol(X_raw), 200)]
+
 #str(X_raw, list.len=ncol(X_raw))
 
 # 33 minutes on 4 cores; X minutes on 24 cores; X minutes on 96 cores.
 #vim = varImpact(Y, X, V=V, g.library=g_lib, Q.library=Q_lib, parallel = T,
-vim = varImpact(Y_raw, X_raw, V=V, g.library=g_lib, Q.library=Q_lib, parallel = T,
+vim = varImpact(Y_raw, X_raw2, V=V, g.library=g_lib, Q.library=Q_lib, parallel = T,
                 minCell=minCell, family = "gaussian", minYs = minYs,
                 verbose=conf$verbose)
 vim$time

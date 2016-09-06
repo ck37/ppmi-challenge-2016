@@ -218,6 +218,13 @@ data = dplyr::left_join(data, epworth, by = "patno")
 stopifnot(nrow(data) == expected_rows)
 rm(epworth)
 
+# GENPHYEX - General physical exam
+genphy = clean_general_physical_exam(files$general_physical_exam)
+names(genphy)
+data = dplyr::left_join(data, genphy, by = "patno")
+stopifnot(nrow(data) == expected_rows)
+rm(genphy)
+
 # HVLT
 hvlt = clean_hvlt(files$hopkins_verbal_learning_test)
 names(hvlt)

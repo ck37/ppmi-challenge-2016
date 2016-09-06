@@ -1,15 +1,15 @@
 #' @param df The input dataframe from the CSVs.
 
-
-clean_peneuro = function(df) {
+clean_general_physical_exam = function(df) {
 
   ################################
   # Manual review.
   if (F) {
-    df = files$general_neurological_exam
+    df = files$general_physical_exam
     dim(df)
     names(df)
     str(df)
+    table(df$event_id)
 
     # Is there duplication at the patient level? Check # of records per patient id.
     dupes = df %>% group_by(patno) %>% summarize(pat_dupes=n())
@@ -30,22 +30,42 @@ clean_peneuro = function(df) {
     View(subset(dupes, pat_dupes > 1))
   }
 
+  ################################
+  # Clean up variables.
 
+  df$infodt = as.Date(paste0(df$infodt, "/15"), "%m/%Y/%d")
 
+  # Take out unneeded fields before we merge.
+  df = subset(df, select = -c(f_status, pag_name,  orig_entry,
+                              abnormcm,
+                              last_update, query, site_aprv))
+
+  df[df$pecat == "Cardiovascular (including peripheral vascular)", "pecat"] = "cardiovasc"
+  df[df$pecat == "Other (Specify location and describe)", "pecat"] = "other"
+  df$pecat = tolower(df$pecat)
+  table(df$pecat, df$peseq)
+
+  df = subset(df, select=-c(peseq, rec_id))
+
+  # name of the test (multiple tests per patno) = pecat
+  # clinical_event and rundate = identify the date and the patient visit
+  # This will generate some warnings.
+  df = reshape(df, timevar = c("pecat"),
+               idvar = c("patno", "event_id", "infodt"), direction = "wide")
 
   ################################
   # Ensure only one observation per patient.
 
-  # Keep BL for each patient.
-  df = df %>% group_by(patno) %>% arrange(rec_id) %>% filter(event_id == "BL")
+  # Keep the first (earliest) record for each patient.
+  df = df %>% group_by(patno) %>% filter(event_id %in% c("BL", "SC")) %>%
+    arrange(infodt) %>% filter(row_number() == 1)
+
+  table(df$event_id)
 
   ################################
   # Remove fields that we don't want to keep.
-  df = subset(df, select = c(patno, msrarsp, mslarsp, msrlrsp, msllrsp,
-                             cofnrrsp, cofnlrsp, cohsrrsp, cohslrsp,
-                             senrarsp, senlarsp, senrlrsp, senllrsp,
-                             rflrarsp, rfllarsp, rflrlrsp, rflllrsp,
-                             plrrrsp, plrlrsp))
+
+  df = subset(df, select=-c(event_id, infodt))
 
   ################################
   # Return the cleaned result.
