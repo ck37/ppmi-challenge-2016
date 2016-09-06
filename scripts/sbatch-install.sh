@@ -4,10 +4,11 @@
 #SBATCH --partition=savio2
 #
 # Account:
-#SBATCH --account=co_biostat
+###SBATCH --account=co_biostat
 #
 # QoS:
-#SBATCH --qos=biostat_normal
+###SBATCH --qos=biostat_normal
+#SBATCH --qos=savio_lowprio
 #
 ###SBATCH --job-name=ck37_vim
 #SBATCH --mail-user=ck37@berkeley.edu
@@ -25,7 +26,7 @@
 ####SBATCH --exclusive
 #
 # Wall clock limit:
-#SBATCH --time=8:00:00
+#SBATCH --time=1:00:00
 #
 ## Run command
 ###export R_LIBS=~/.R-packages
