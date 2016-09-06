@@ -86,27 +86,42 @@ g_lib = c("SL.glmnet", "SL.mean")
 
 # V is expected to be 2 by default. Eventually support larger Vs.
 V = 2
-minCell = 0
+minCell = 10
 minYs = 15
 
 # Subset columns randomly.
 X_raw2 = X_raw[, sample(ncol(X_raw), 200)]
+X_raw2 = X_raw
+
+# Confirm X_raw has no factors.
+stopifnot(sum(sapply(X_raw2, is.factor)) == 0)
+# Confirm X_raw has no strings.
+stopifnot(sum(sapply(X_raw2, is.character)) == 0)
 
 #str(X_raw, list.len=ncol(X_raw))
 
+X_raw2 = subset(X_raw, select=c(scau23, scau25, vltveg, updrs_score_p3, drmagrac, np2eat))
+
+# summary(X_raw$np2eat)
+# table(X_raw$np2eat)
+
 # 33 minutes on 4 cores; X minutes on 24 cores; X minutes on 96 cores.
 #vim = varImpact(Y, X, V=V, g.library=g_lib, Q.library=Q_lib, parallel = T,
-vim = varImpact(Y_raw, X_raw2, V=V, g.library=g_lib, Q.library=Q_lib, parallel = T,
-                minCell=minCell, family = "gaussian", minYs = minYs,
-                verbose=conf$verbose)
-vim$time
-vim
-vim$results_all
-exportLatex(vim, outname = "vim_", dir = paste0(conf$tex_dir, "/"))
-
-
-save(vim, conf, dataset, raw_dataset,
+vim = try(
+ varImpact(Y_raw, X_raw, V=V, g.library=g_lib, Q.library=Q_lib,
+            parallel = T, minCell=minCell, family = "gaussian",
+            minYs = minYs, verbose=conf$verbose)
+)
+if (class(vim) == "try-error") {
+  cat("Error in vim estimation :/\n")
+} else {
+  print(vim$time)
+  print(vim)
+  print(vim$results_all)
+  exportLatex(vim, outname = "vim_", dir = paste0(conf$tex_dir, "/"))
+  save(vim, conf, dataset, raw_dataset,
      file=paste0(conf$data_dir, "/varimpact_analysis.RData"))
+}
 ```
 
 ## RandomForest benchmark

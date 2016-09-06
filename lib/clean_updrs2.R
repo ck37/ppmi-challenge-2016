@@ -8,6 +8,7 @@ clean_updrs2 = function(df) {
     dim(df)
     names(df)
     str(df)
+    summary(df)
 
     # Is there duplication at the patient level? Check # of records per patient id.
     dupes = df %>% group_by(patno) %>% summarize(pat_dupes=n())

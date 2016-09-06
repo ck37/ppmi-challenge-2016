@@ -32,6 +32,6 @@
 ###export R_LIBS=~/.R-packages
 # module unload intel
 #module load r gcc
-module load gcc/4.8.5 java lapack mkl
+module load gcc/4.8.5 java lapack #mkl
 
 R CMD BATCH --no-save --no-restore install.R install.out
