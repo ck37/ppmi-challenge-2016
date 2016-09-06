@@ -3,14 +3,15 @@
 # Setup
 ACCOUNT=co_biostat
 PARTITION=savio2
+SCRIPT_DIR=scripts
 
 #######################
 # Targets
 
 all: install data analysis
 
-install: install.R sbatch-install.sh
-	sbatch sbatch-install.sh
+install: install.R ${SCRIPT_DIR}/sbatch-install.sh
+	sbatch ${SCRIPT_DIR}/sbatch-install.sh
 
 #setup: setup-cluster.sh
 #	bash $^
@@ -27,13 +28,13 @@ merge-data: merge-data.Rmd
 	#Rscript -e "markdown::markdownToHTML('merge-data.md', 'merge-data.html')"
 
 vim: variable-importance.Rmd
-	sbatch sbatch-vim.sh
+	sbatch scripts/sbatch-vim.sh
 
 predict-cumu: predict-cumulative.Rmd
-	sbatch sbatch-predict-cumu.sh
+	sbatch scripts/sbatch-predict-cumu.sh
 
 predict-indiv: create-dataset.Rmd predict-individual.Rmd
-	sbatch sbatch-predict-indiv.sh
+	sbatch scripts/sbatch-predict-indiv.sh
 
 bash:
 	# Start a bash session with 2 nodes, for up to 5 hours.
