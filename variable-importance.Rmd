@@ -81,12 +81,12 @@ Q_lib = c("SL.glmnet", "SL.earth", "SL.mean", "SL.xgboost", "SL.stepAIC", "SL.ra
 Q_lib = c("SL.glmnet", "SL.mean", "SL.randomForest")#, "SL.bayesglm")#, "SL.gam", "SL.rpartPrune", "SL.bartMachine")
 # g_lib = c("SL.stepAIC", "SL.mean")
 # Super fast:
-Q_lib = c("SL.glmnet", "SL.mean")
+#Q_lib = c("SL.glmnet", "SL.mean")
 g_lib = c("SL.glmnet", "SL.mean")
 
 # V is expected to be 2 by default. Eventually support larger Vs.
 V = 2
-minCell = 10
+minCell = 0
 minYs = 15
 
 # Subset columns randomly.
@@ -95,6 +95,7 @@ sample = sample(rep(1:3, length.out = ncol(X_raw)), ncol(X_raw))
 table(sample)
 X_raw2 = X_raw[, sample == 1]
 #X_raw2 = X_raw
+str(X_raw2)
 
 # Confirm X_raw has no factors.
 stopifnot(sum(sapply(X_raw2, is.factor)) == 0)
@@ -114,7 +115,8 @@ if (F) {
     debugonce(varImpact)
   }
 vim = try(
-  varImpact(Y_raw, X_raw, V=V, g.library=g_lib, Q.library=Q_lib,
+  #varImpact(Y_raw, X_raw, V=V, g.library=g_lib, Q.library=Q_lib,
+  varImpact(Y, X, V=V, g.library=g_lib, Q.library=Q_lib,
             parallel = T, minCell=minCell, family = "gaussian",
             minYs = minYs, verbose=conf$verbose)
 )
