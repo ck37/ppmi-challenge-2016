@@ -104,12 +104,33 @@ if (sum(sapply(data, is.factor)) != 0) {
 data = data[, !sapply(data, is.factor)]
 dim(data)
 
+# Remove zero variance (constant) and near-zero-variance columns.
+preproc = caret::preProcess(data, method = c("zv", "nzv"))
+# This presumably removes a bunch of the missingness indicators.
+data = predict(preproc, data)
+dim(data)
+rm(preproc)
+
+# Save a "raw" dataset prior to imputation, for use with varImpact()
+# We are doing this before adding missing indicators, because it seems
+# to break varImmpact if the indicators are added.
+raw_dataset = list(X = data, outcomes = outcome_df)
+
+
 # Add missingness indicators in a separate step.
 miss_df = ckTools::missingness_indicators(data)
 
 # We are not imputing the values yet, because we don't want the imputed data
 # in the varImpact analysis.
 data = cbind(data, miss_df)
+dim(data)
+
+
+# Impute missing data. We don't add indicators because those were already added
+# a few lines up.
+# This should not generate any warnings, but if it does then there are probably
+# character columns remaining that need to be resolved.
+data = ckTools::impute_missing_values(data, add_indicators = F)
 dim(data)
 
 # Remove zero variance (constant) and near-zero-variance columns.
@@ -119,18 +140,7 @@ data = predict(preproc, data)
 dim(data)
 rm(preproc)
 
-# Save a "raw" dataset prior to imputation, for use with varImpact()
-raw_dataset = list(X = data, outcomes = outcome_df)
-
-# Impute missing data. We don't add indicators because those were already added
-# a few lines up.
-# This should not generate any warnings, but if it does then there are probably
-# character columns remaining that need to be resolved.
-data = ckTools::impute_missing_values(data, add_indicators = F)
-dim(data)
-
 str(data, list.len = ncol(data))
-
 
 # Convert factors to binary indicators. (e.g. via model.matrix)
 # Not using this right now, we just removed the two factors above.

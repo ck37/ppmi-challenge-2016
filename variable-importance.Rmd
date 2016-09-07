@@ -64,7 +64,7 @@ Y_raw = raw_dataset$outcomes$progression
 
 ## VarImpact() analysis (run manually - takes 60+ mins)
 
-```{r varimpact, error=T, eval=F}
+```{r varimpact, error=T, eval=T}
 
 library(varImpact)
 
@@ -90,8 +90,11 @@ minCell = 10
 minYs = 15
 
 # Subset columns randomly.
-X_raw2 = X_raw[, sample(ncol(X_raw), 200)]
-X_raw2 = X_raw
+# 3 equal sized samples.  
+sample = sample(rep(1:3, length.out = ncol(X_raw)), ncol(X_raw))
+table(sample)
+X_raw2 = X_raw[, sample == 1]
+#X_raw2 = X_raw
 
 # Confirm X_raw has no factors.
 stopifnot(sum(sapply(X_raw2, is.factor)) == 0)
@@ -100,15 +103,18 @@ stopifnot(sum(sapply(X_raw2, is.character)) == 0)
 
 #str(X_raw, list.len=ncol(X_raw))
 
-X_raw2 = subset(X_raw, select=c(scau23, scau25, vltveg, updrs_score_p3, drmagrac, np2eat))
+#X_raw2 = subset(X_raw, select=c(scau23, scau25, vltveg, updrs_score_p3, drmagrac, np2eat))
 
 # summary(X_raw$np2eat)
 # table(X_raw$np2eat)
 
 # 33 minutes on 4 cores; X minutes on 24 cores; X minutes on 96 cores.
 #vim = varImpact(Y, X, V=V, g.library=g_lib, Q.library=Q_lib, parallel = T,
+if (F) {
+    debugonce(varImpact)
+  }
 vim = try(
- varImpact(Y_raw, X_raw, V=V, g.library=g_lib, Q.library=Q_lib,
+  varImpact(Y_raw, X_raw, V=V, g.library=g_lib, Q.library=Q_lib,
             parallel = T, minCell=minCell, family = "gaussian",
             minYs = minYs, verbose=conf$verbose)
 )

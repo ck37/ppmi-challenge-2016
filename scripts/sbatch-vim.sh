@@ -36,7 +36,7 @@
 ###export R_LIBS=~/.R-packages
 #module unload intel
 #module load r gcc
-module load gcc/4.8.5 java lapack mkl
+module load gcc/4.8.5 java lapack #mkl
 
 #R --no-save -q < exsnowslurm.R > exsnowslurm.Rout
 #R CMD knit  --no-save --no-restore OrpheaRepTP.Rmd test1.out
