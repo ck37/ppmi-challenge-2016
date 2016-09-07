@@ -1,4 +1,3 @@
-#' Clean up the family history table.
 #' @param df The input dataframe from the CSVs.
 
 clean_genmedical_hx = function(df) {
@@ -9,6 +8,7 @@ clean_genmedical_hx = function(df) {
     dim(df)
     names(df)
     str(df)
+    table(df$event_id)
 
     # Is there duplication at the patient level? Check # of records per patient id.
     dupes = df %>% group_by(patno) %>% summarize(pat_dupes=n())
@@ -32,25 +32,35 @@ clean_genmedical_hx = function(df) {
   ################################
   # Clean up important variables.
 
+  df$infodt = as.Date(paste0(df$infodt, "/15"), "%m/%Y/%d")
 
-  ################################
-  # Ensure only one observation per patient.
-
-  # Keep the first (earliest) record for each patient.
-  df = df %>% group_by(patno) %>% arrange(rec_id) %>% filter(row_number() == 1)
-
-  # This subsets to the first row for each patient, which may not be the best
-  # row choice. However this ensures that we don't join multiple results for a
-  # patient to our main data frame. Ideally we would figure out which row is
-  # best for a given patient.
-  #df = df %>% distinct(patno, .keep_all = T)
-
+  # De-duplicate.
 
   ################################
   # Remove fields that we don't want to keep.
 
-  df = data.frame(patno = df$patno, year_of_dx = df$mhdiagyr)
 
+  df = data.frame(patno = df$patno, year_of_dx = df$mhdiagyr, mhcat = df$mhcat)
+
+  if (F) {
+    df = subset(df, select = c(patno, mhdiagyr, mhcat))
+  }
+
+
+  ################################
+  # Reshape data
+
+  # patient remains the unique observation identifier.
+  # This is ok because event_id is either BL or SC.
+  # health category goes into a column
+  # Diagnosis year goes into the cell.
+  df = reshape(df, timevar = "mhcat", idvar = "patno", direction = "wide")
+
+  #df = df %>% group_by(patno, mhcat) %>% arrange(infodt) %>%
+  #  filter(row_number() == 1) %>% ungroup()
+
+
+  # Keep the first (earliest) record for each patient.
 
   # Return the cleaned result.
   df

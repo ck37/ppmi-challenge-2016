@@ -115,8 +115,11 @@ stopifnot(nrow(data) == expected_rows)
 rm(prodromal_dq)
 
 # General medical history.
+# CK: this seems to be getting dropped by the near-zero variance check :/
+# May want to convert it to a numeric?
 genmedical_hx = clean_genmedical_hx(files$general_medical_history)
 names(genmedical_hx)
+str(genmedical_hx)
 data = dplyr::left_join(data, genmedical_hx, by = "patno")
 # Ensure we aren't adding multiple observations for a given patient.
 stopifnot(nrow(data) == expected_rows)
