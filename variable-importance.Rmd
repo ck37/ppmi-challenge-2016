@@ -86,8 +86,8 @@ g_lib = c("SL.glmnet", "SL.mean")
 
 # V is expected to be 2 by default. Eventually support larger Vs.
 V = 2
-minCell = 20
-minYs = 15
+minCell = 40
+minYs = 100
 
 # Subset columns randomly.
 # 3 equal sized samples.  
