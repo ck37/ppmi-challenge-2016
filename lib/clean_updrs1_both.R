@@ -64,6 +64,11 @@ clean_updrs1_both = function(df, df_patient) {
   hist(data$updrs_score_p1)
 
 
+  ##### months of follow up
+#  df$infodt = as.Date(paste0(df$infodt, "/15"), "%m/%Y/%d")
+#  df = df %>% group_by(patno) %>% max(infodt)
+
+
   # Save the latest UPDRS part 1 combined score, as well as the # of UPDRS1
   # records each patient has.
   data = data %>% group_by(patno) %>% arrange(rec_id) %>%
@@ -78,7 +83,7 @@ clean_updrs1_both = function(df, df_patient) {
 
   ################################
   # Remove fields that we don't want to keep.
-  data = subset(data, select = -c(event_id, infodt))
+  data = subset(data, select = -c(event_id, infodt, rec_id))
 
   ################################
   # Return the cleaned result.

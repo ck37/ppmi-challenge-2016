@@ -64,7 +64,7 @@ Y_raw = raw_dataset$outcomes$progression
 
 ## VarImpact() analysis (run manually - takes 60+ mins)
 
-```{r varimpact, error=T, eval=T}
+```{r varimpact, error=T, eval=F}
 
 library(varImpact)
 
@@ -81,12 +81,12 @@ Q_lib = c("SL.glmnet", "SL.earth", "SL.mean", "SL.xgboost", "SL.stepAIC", "SL.ra
 Q_lib = c("SL.glmnet", "SL.mean", "SL.randomForest")#, "SL.bayesglm")#, "SL.gam", "SL.rpartPrune", "SL.bartMachine")
 # g_lib = c("SL.stepAIC", "SL.mean")
 # Super fast:
-#Q_lib = c("SL.glmnet", "SL.mean")
+Q_lib = c("SL.glmnet", "SL.mean")
 g_lib = c("SL.glmnet", "SL.mean")
 
 # V is expected to be 2 by default. Eventually support larger Vs.
 V = 2
-minCell = 0
+minCell = 20
 minYs = 15
 
 # Subset columns randomly.

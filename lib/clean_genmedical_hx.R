@@ -60,7 +60,6 @@ clean_genmedical_hx = function(df) {
   #  filter(row_number() == 1) %>% ungroup()
 
 
-  # Keep the first (earliest) record for each patient.
 
   # Return the cleaned result.
   df

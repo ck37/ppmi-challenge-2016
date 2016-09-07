@@ -62,6 +62,7 @@ exclude_vars = c(exclude_vars, "condcat", "socabbr1")
 # Exclude this other vector of variables.
 data = data[, setdiff(names(data), exclude_vars)]
 rm(exclude_vars)
+dim(data)
 
 # Convert strings to factors.
 # This is not working right now.
@@ -85,8 +86,10 @@ outcome_df = outcome_df[defined_outcome, ]
 data = data[defined_outcome, ]
 rm(defined_outcome)
 
-
-
+# Remove strings for now. TODO: investigate the string vars more thoroughly.
+dim(data)
+data = data[, !sapply(data, is.character)]
+dim(data)
 
 # Confirm that we have no string columns.
 if (sum(sapply(data, is.character)) != 0) {
@@ -118,19 +121,19 @@ raw_dataset = list(X = data, outcomes = outcome_df)
 
 
 # Add missingness indicators in a separate step.
-miss_df = ckTools::missingness_indicators(data)
+#miss_df = ckTools::missingness_indicators(data)
 
 # We are not imputing the values yet, because we don't want the imputed data
 # in the varImpact analysis.
-data = cbind(data, miss_df)
-dim(data)
+#data = cbind(data, miss_df)
+#dim(data)
 
 
 # Impute missing data. We don't add indicators because those were already added
 # a few lines up.
 # This should not generate any warnings, but if it does then there are probably
 # character columns remaining that need to be resolved.
-data = ckTools::impute_missing_values(data, add_indicators = F)
+data = ckTools::impute_missing_values(data, add_indicators = T)
 dim(data)
 
 # Remove zero variance (constant) and near-zero-variance columns.
@@ -155,6 +158,9 @@ rm(data, outcome_df)
 
 # Final covariate dimensions.
 dim(dataset$X)
+
+sum(sapply(dataset$X, is.character))
+sum(sapply(raw_dataset$X, is.character))
 
 # Save a cleaned dataset for prediction.
 save(dataset, raw_dataset, file=paste0(conf$data_dir, "/create-dataset.RData"))
