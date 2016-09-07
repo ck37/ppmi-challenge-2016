@@ -281,7 +281,9 @@ cumulative_library_seq = function(data_dims,
                                   glm = T,
                                   type="classification") {
   #extra_libs = c("SL.bartMachine")
-  extra_libs = list(c("SL.glm", "screen.glmnet"))
+  # This is pretty slow:
+  #extra_libs = list(c("SL.glm", "screen.glmnet"))
+  extra_libs = c()
 
   nc = data_dims[2]
 
@@ -294,7 +296,7 @@ cumulative_library_seq = function(data_dims,
   }
 
   # Minimum library.
-  lib0 = list(lib=list("SL.mean", "SL.glm", c("SL.glm", "screen.glmnet")))
+  lib0 = list(lib=list("SL.mean", "SL.glm"))#, c("SL.glm", "screen.glmnet")))
   cat("Total models:", length(lib0$lib), "\n")
 
   lib1 = list(lib=c(lib0$lib, "SL.glmnet"))
@@ -302,23 +304,29 @@ cumulative_library_seq = function(data_dims,
 
   # lib2 = list(lib=c("SL.glmnet", "SL.mean", "SL.glm", "SL.stepAIC", "SL.earth", "SL.rpartPrune"))
   # Remove stepAIC
-  lib2 = list(lib=c(lib1$lib, "SL.earth", "SL.rpartPrune"))
+  #lib2 = list(lib=c(lib1$lib, "SL.earth", "SL.rpartPrune"))
   #lib2 = list(lib=c("SL.glmnet", "SL.mean", "SL.glm", "SL.earth"))
-  cat("Total models:", length(lib2$lib), "\n")
+  #cat("Total models:", length(lib2$lib), "\n")
 
-  lib3 = create_SL_lib(nc, type=type, xgb=F, glm=glm, rf=F, cf=F, earth=F, knn=F, glmnet=F, gam=F, detailed_names = T, extra_libs = list("SL.glmnet", extra_libs))
+  #lib3 = create_SL_lib(nc, type=type, xgb=F, glm=glm, rf=F, cf=F, earth=F, knn=F, glmnet=F, gam=F, detailed_names = T, extra_libs = list("SL.glmnet", extra_libs))
+  lib3 = create_SL_lib(nc, type=type, xgb=F, glm=glm, rf=F, cf=F, earth=F, knn=F, glmnet=F, gam=F, detailed_names = T, extra_libs = c("SL.glmnet"))
   lib4 = create_SL_lib(nc, type=type, xgb=F, glm=glm, rf=F, cf=F, earth=F, knn=F, glmnet=T, glmnet_size=5, gam=F, extra_libs = extra_libs, detailed_names = T)
+  # Temporarily removing RFs as they are resulting in NAs for some reason.
   lib5 = create_SL_lib(nc, type=type, xgb=F, glm=glm, rf=T, cf=F, earth=F, knn=F ,glmnet=T, glmnet_size=5, gam=F, extra_libs = extra_libs, detailed_names = T)
   # Temporarily removing GAMs as they are resulting in NAs for some reason.
   # lib6 = create_SL_lib(nc, xgb=F, rf=T, glmnet=T, glmnet_size=5, gam=F, extra_libs = extra_libs, detailed_names = T)
-  lib7 = create_SL_lib(nc, type=type, xgb=F, glm=glm, rf=T, cf=T, earth=F, knn=F, glmnet=T, glmnet_size=11, gam=F, extra_libs = extra_libs, detailed_names = T)
+  # Temporarily removing RFs as they are resulting in NAs for some reason.
+  lib7 = create_SL_lib(nc, type=type, xgb=F, glm=glm, rf=T, cf=F, earth=F, knn=F, glmnet=T, glmnet_size=11, gam=F, extra_libs = extra_libs, detailed_names = T)
+  #lib7 = create_SL_lib(nc, type=type, xgb=F, glm=glm, rf=F, cf=T, earth=F, knn=F, glmnet=T, glmnet_size=11, gam=F, extra_libs = extra_libs, detailed_names = T)
   # TODO: one more version with a few XGB configs.
   lib8 = create_SL_lib(nc, type=type, xgb="small", glm=glm, rf=T, cf=F, earth=T, knn=F, glmnet=T, glmnet_size=11, gam=F, detailed_names = T)
   # Full library.
   lib9 = create_SL_lib(nc, type=type, xgb=T, glm=glm, rf=T, cf=T, earth=F, knn=F, glmnet=T, glmnet_size=11, gam=F, detailed_names = T)
 
   #libs = list(lib1, lib2, lib3, lib4, lib5, lib6, lib7, lib8, lib9)
-  libs = list(lib0, lib1, lib2, lib3, lib4, lib5, lib7, lib8, lib9)
+  #libs = list(lib0, lib1, lib2, lib3, lib4, lib5, lib7, lib8, lib9)
+  #libs = list(lib0, lib1, lib3, lib4, lib5, lib7, lib8, lib9)
+  libs = list(lib0, lib1, lib3, lib4, lib5, lib7, lib8)
   if (!glm) {
     cat("Removing GLM from all libraries.")
     libs = lapply(libs, FUN=function(x) {

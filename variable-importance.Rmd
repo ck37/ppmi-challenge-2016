@@ -29,7 +29,7 @@ conf$cv_folds = 10
 # If the cluster object is null it means we're setup for multicore (or nuthin).
 if (is.null(conf$cluster) || is.na(conf$cluster)) {
   # Use non-CV if we're running this in RStudio on a laptop.
-  if (.Platform$GUI == "RStudio") {
+  if (T || .Platform$GUI == "RStudio") {
     fn = "sl_fn"
   } else {
     fn = "cv_sl_fn"
@@ -64,7 +64,7 @@ Y_raw = raw_dataset$outcomes$progression
 
 ## VarImpact() analysis (run manually - takes 60+ mins)
 
-```{r varimpact, error=T, eval=F}
+```{r varimpact, error=F, eval=T}
 
 library(varImpact)
 
@@ -81,12 +81,14 @@ Q_lib = c("SL.glmnet", "SL.earth", "SL.mean", "SL.xgboost", "SL.stepAIC", "SL.ra
 Q_lib = c("SL.glmnet", "SL.mean", "SL.randomForest")#, "SL.bayesglm")#, "SL.gam", "SL.rpartPrune", "SL.bartMachine")
 # g_lib = c("SL.stepAIC", "SL.mean")
 # Super fast:
-Q_lib = c("SL.glmnet", "SL.mean")
+#Q_lib = c("SL.glmnet", "SL.mean")
+Q_lib = c("SL.randomForest", "SL.mean")
 g_lib = c("SL.glmnet", "SL.mean")
 
 # V is expected to be 2 by default. Eventually support larger Vs.
 V = 2
 minCell = 40
+minCell = 20
 minYs = 100
 
 # Subset columns randomly.
@@ -134,14 +136,14 @@ if (class(vim) == "try-error") {
 
 ## RandomForest benchmark
 
-```{r rf}
+```{r rf, eval=F}
 set.seed(1)
 
 # We shold use the best mtry based on the CV.SL results from the final prediction library.
 # Takes about 45 seconds.
 # TODO: run multicore to be super fast.
 rf_time = system.time({
-  rf = randomForest(X, Y, ntree = 3000, #mtry = 98, 
+  rf = randomForest(X, Y, ntree = 3000, mtry = 20, 
                   importance=T, keep.inbag = T, keep.forest = T)
 })
 rf_time
@@ -233,7 +235,7 @@ save(rf, rf_imp, rf_perf, file=paste0(conf$data_dir, "/vim_rf.RData"))
 
 ## Conditional Forest benchmark
 
-```{r cforest}
+```{r cforest, eval=F}
 
 ##################################
 ## Compare to cforest.

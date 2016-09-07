@@ -64,6 +64,14 @@ data = data[, setdiff(names(data), exclude_vars)]
 rm(exclude_vars)
 dim(data)
 
+names(data)
+# Change spaces and other special characters to underscores.
+names(data) = gsub("[- /.]", "_", names(data), perl=T)
+# Remove other weird characters.
+names(data) = gsub("%", "pct", names(data), fixed=T)
+names(data) = gsub("[:?()]", "", names(data), perl=T)
+names(data)
+
 # Convert strings to factors.
 # This is not working right now.
 if (F) {
