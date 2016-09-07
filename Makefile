@@ -19,7 +19,7 @@ install: install.R ${SCRIPT_DIR}/sbatch-install.sh
 
 data: merge-data create-dataset
 
-create-dataset: create-dataset.Rmd merge-data
+create-dataset: create-dataset.Rmd
 	Rscript -e "knitr::knit('create-dataset.Rmd')" 2>&1
 
 merge-data:
