@@ -20,13 +20,13 @@ conf$cluster = ckTools::parallelize(allow_multinode=F)
 conf$method = "method.NNLS"
 
 # conf$outer_cv_folds = 10
-conf$outer_cv_folds = 20
-conf$cv_folds = 10
+conf$outer_cv_folds = 5
+conf$cv_folds = 8
 
 # If the cluster object is null it means we're setup for multicore (or nuthin).
 if (is.null(conf$cluster) || is.na(conf$cluster)) {
   # Use non-CV if we're running this in RStudio on a laptop.
-  if (T || .Platform$GUI == "RStudio") {
+  if (F && .Platform$GUI == "RStudio") {
     cat("Using normal SuperLearner.\n")
     fn = "sl_fn"
   } else {
@@ -63,7 +63,8 @@ Y = dataset$outcomes$progression
 libs = cumulative_library_seq(dim(X), type = "regression", glm=F)
 length(libs)
 
-libs = libs[c(2, 5)]
+#libs = libs[c(2, 5, 7)]
+libs = libs[c(2, 7)]
 
 results = fit_model_libs(Y, X, libs,
                          family=gaussian(), sl_fn = conf$sl_fn,

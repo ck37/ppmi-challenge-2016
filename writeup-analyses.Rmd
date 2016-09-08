@@ -1,0 +1,24 @@
+```{r}
+source("lib/function_library.R", echo=F)
+
+# Load other R source files in the lib directory.
+load_all_code("lib")
+
+# Load a bunch of required packages, installing missing ones as needed.
+load_all_packages(auto_install = T)
+
+# Set some standard settings.
+conf = list(data_dir = "data", dir = ".")
+```
+
+```{r}
+load(paste0(conf$data_dir, "/create-dataset.RData"))
+
+# Progression summary.
+summary(dataset$outcomes$progression)
+sd(dataset$outcomes$progression)
+qplot(dataset$outcomes$progression) + theme_bw() + ggtitle("Parkinson's disease progression") + xlab("Progression of UPDRS score: final - baseline") +
+  ylab("Count of subjects")
+ggsave("visuals/progression-hist.png")
+
+```
