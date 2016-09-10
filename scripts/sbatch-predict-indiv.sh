@@ -33,16 +33,14 @@
 #### Done configuring sbatch.
 
 ## Run command
-# module load r gcc
-# module load gcc/4.8.5 java
-module load gcc/4.8.5 java lapack
-
-#R --no-save -q < exsnowslurm.R > exsnowslurm.Rout
-#R CMD knit  --no-save --no-restore OrpheaRepTP.Rmd test1.out
+module load gcc/4.8.5 java lapack #mkl
 
 # Could prefix with "nice":
 file="predict-individual"
 dir_output="output"
-Rscript -e "knitr::knit('$file.Rmd', '$dir_output/$file.md')" 2>&1
+# knitr does not support subdirectories - need to use cd.
+cd $dir_output
+# This assumes we are in a subdirectory; remove "../" if not.
+Rscript -e "knitr::knit('../$file.Rmd', '$file.md')" 2>&1
 # Convert markdown to html once the Rmd file is complete.
-Rscript -e "markdown::markdownToHTML('$dir_output/$file.md', '$dir_output/$file.html')"
+Rscript -e "markdown::markdownToHTML('$file.md', '$file.html')"
