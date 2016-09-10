@@ -1,17 +1,5 @@
 #!/bin/bash
 
-for i in "$@"
-do
-case $i in
-    -f=*|--file=*)
-    file="${i#*=}"
-    ;;
-    -d=*|--dir=*)
-    dir_output="${i#*=}"
-    ;;
-esac
-done
-
 ######### Sbatch configuration.
 #
 # Partition:
@@ -45,8 +33,19 @@ done
 #
 #### Done configuring sbatch.
 
+for i in "$@"
+do
+case $i in
+    -f=*|--file=*)
+    file="${i#*=}"
+    ;;
+    -d=*|--dir=*)
+    dir_output="${i#*=}"
+    ;;
+esac
+done
+
 ## Run command
-###export R_LIBS=~/.R-packages
 # module load r gcc
 # module load gcc/4.8.5 java
 module load gcc/4.8.5 java lapack
