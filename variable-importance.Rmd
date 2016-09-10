@@ -82,7 +82,8 @@ Q_lib = c("SL.glmnet", "SL.mean", "SL.randomForest")#, "SL.bayesglm")#, "SL.gam"
 # g_lib = c("SL.stepAIC", "SL.mean")
 # Super fast:
 #Q_lib = c("SL.glmnet", "SL.mean")
-Q_lib = c("SL.randomForest", "SL.mean")
+Q_lib = c("SL.glmnet", "SL.randomForest", "SL.mean", "SL.svm", "SL.xgboost")
+#Q_lib = c("SL.randomForest", "SL.mean")
 g_lib = c("SL.glmnet", "SL.mean")
 
 # V is expected to be 2 by default. Eventually support larger Vs.
@@ -117,9 +118,9 @@ if (F) {
     debugonce(varImpact)
   }
 vim = try(
-  #varImpact(Y_raw, X_raw, V=V, g.library=g_lib, Q.library=Q_lib,
-  varImpact(Y, X, V=V, g.library=g_lib, Q.library=Q_lib,
-            parallel = T, minCell=minCell, family = "gaussian",
+  varImpact(Y_raw, X_raw, V=V, g.library=g_lib, Q.library=Q_lib,
+  #varImpact(Y, X, V=V, g.library=g_lib, Q.library=Q_lib,
+            parallel = F, minCell=minCell, family = "gaussian",
             minYs = minYs, verbose=conf$verbose)
 )
 if (class(vim) == "try-error") {
@@ -127,8 +128,54 @@ if (class(vim) == "try-error") {
 } else {
   print(vim$time)
   print(vim)
+  print(dim(vim$results_consistent))
   print(vim$results_all)
-  exportLatex(vim, outname = "vim_", dir = paste0(conf$tex_dir, "/"))
+  
+  addtorow = list("pos" = list(0))
+  #addtorow$pos[[1]] <- c(0)
+  addtorow$command = paste("\\hline", "\\endhead", "\\hline",
+            "\\multicolumn{3}{l}{\\footnotesize Continued on next page}",
+            "\\endfoot", "\\endlastfoot", sep = " \n")
+  
+  # Make a copy to customize the rounding.
+  #vim_latex = vim
+  #vim_latex$results_consistent$Estimate = round(vim_latex$results_consistent$Estimate, 2)
+  
+  exportLatex(vim, outname = "vim_", dir = paste0(conf$tex_dir, "/"),
+              tabular.environment = "longtable",
+              floating = F,
+              add.to.row = addtorow)
+  
+  # Customize the consistent table to be even prettier.
+  consistent_table = cbind("Rank" = 1:nrow(vim$results_consistent),
+                           "Variable" = rownames(vim$results_consistent),
+                           vim$results_consistent)
+  
+  file = paste0(paste(conf$tex_dir, "vim_", sep = "/"), "varimpConsistent.tex")
+  library(xtable)
+  print(xtable(consistent_table,
+              caption = "Subset of of Significant and ``Consistent'' Results",
+              label = "consisRes",
+              digits = c(0, 0, 0, 0, 2, 4)),
+        type = "latex",
+        file = file,
+        caption.placement = "top",
+        include.rownames = F,
+        tabular.environment = "longtable",
+        floating = F,
+        add.to.row = addtorow)
+  
+  # Add in longer variable names.
+  codes = get_codebook()
+
+  consistent_table = dplyr::left_join(consistent_table, codes, by = c("Variable" = "field_name"))
+  colnames(consistent_table)[ncol(consistent_table)] = "Description"
+  
+  consistent_table$Estimate = round(consistent_table$Estimate, 2)
+  
+  if (!require(openxlsx)) install.packages("openxlsx")
+  openxlsx::write.xlsx(consistent_table, file="output/vim-consistent-table.xlsx")
+  
   save(vim, conf, dataset, raw_dataset,
      file=paste0(conf$data_dir, "/varimpact_analysis.RData"))
 }

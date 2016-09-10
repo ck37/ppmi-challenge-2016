@@ -64,7 +64,7 @@ libs = cumulative_library_seq(dim(X), type = "regression", glm=F)
 length(libs)
 
 #libs = libs[c(2, 5, 7)]
-libs = libs[c(2, 7)]
+#libs = libs[c(1, 2, 3, 4, 5, 7)]
 
 results = fit_model_libs(Y, X, libs,
                          family=gaussian(), sl_fn = conf$sl_fn,
@@ -81,6 +81,7 @@ load(file=paste0(conf$data_dir, "/predict_results.RData"))
 
 # Create plots and generate tables for all results.
 # TODO: update this function to support RMSE rather than AUC as the metric.
+# Also display R^2 in this analysis.
 if (F) {
 plot_all_results(results, dataset$outcomes$progresson, "PD", libs,
                  type = "regression",

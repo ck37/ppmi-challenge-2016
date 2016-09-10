@@ -11,14 +11,40 @@ load_all_packages(auto_install = T)
 conf = list(data_dir = "data", dir = ".")
 ```
 
+Dataset
+
 ```{r}
 load(paste0(conf$data_dir, "/create-dataset.RData"))
 
 # Progression summary.
 summary(dataset$outcomes$progression)
 sd(dataset$outcomes$progression)
+var(dataset$outcomes$progression)
 qplot(dataset$outcomes$progression) + theme_bw() + ggtitle("Parkinson's disease progression") + xlab("Progression of UPDRS score: final - baseline") +
   ylab("Count of subjects")
 ggsave("visuals/progression-hist.png")
+```
 
+# Variable importance
+
+# Prediction
+```{r}
+load(paste0(conf$data_dir, "/predict_results.RData"))
+best_results = results[[length(results)]]
+names(best_results)
+qplot(best_results$SL.predict)
+summary(best_results$SL.predict)
+
+cor = cor(best_results$SL.predict, dataset$outcomes$progression)
+cor^2
+cor.test(best_results$SL.predict, dataset$outcomes$progression)
+
+reg = lm(dataset$outcomes$progression ~ best_results$SL.predict)
+summary(reg)
+
+# Manual R^2.
+# Doesn't give the same results as the regression. Formula wrong?
+y_bar = mean(dataset$outcomes$progression)
+r_sqr = sum((best_results$SL.predict - y_bar)^2) / sum((dataset$outcomes$progression - y_bar)^2)
+r_sqr
 ```
