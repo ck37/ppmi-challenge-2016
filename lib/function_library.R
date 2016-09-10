@@ -341,7 +341,7 @@ cumulative_library_seq = function(data_dims,
 
 #' @param data_dims Dimensions of the training data (two-element vector).
 #' @param glm Set glm to F if there are more columns than rows.
-individual_library_seq = function(data_dims, glm = F) {
+individual_library_seq = function(data_dims, glm = F, type = "classification") {
   num_cols = data_dims[2]
   libs = list(
     list(lib="SL.mean"),
