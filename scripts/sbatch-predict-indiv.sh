@@ -1,5 +1,4 @@
 #!/bin/bash
-
 ######### Sbatch configuration.
 #
 # Partition:
@@ -34,8 +33,6 @@
 #### Done configuring sbatch.
 
 ## Run command
-###export R_LIBS=~/.R-packages
-# module unload intel
 # module load r gcc
 # module load gcc/4.8.5 java
 module load gcc/4.8.5 java lapack

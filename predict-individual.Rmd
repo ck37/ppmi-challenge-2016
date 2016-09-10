@@ -7,14 +7,18 @@ load_all_code("lib")
 # Load a bunch of required packages, installing missing ones as needed.
 load_all_packages(auto_install = T)
 
-conf = list(verbose = F, dir = ".", data_dir = "data")
+conf = list(verbose = F,
+            dir = ".",
+            data_dir = "data",
+            tex_dir = "tex",
+            visual_dir = "visuals")
 ```
 
 ```{r predict-setup}
 
 # Setup multinode processing if available.
 # Just use multicore for now.
-conf$cluster = ckTools::parallelize(allow_multinode=F)
+conf$cluster = ckTools::parallelize(allow_multinode=T)
 
 #conf$method = "method.AUC"
 conf$method = "method.NNLS"
@@ -31,7 +35,8 @@ if (is.null(conf$cluster) || is.na(conf$cluster)) {
   } else {
     fn = "cv_sl_fn"
   }
-  if (F) {
+  # Manually change this to F to force non-parallel SuperLearner.
+  if (T) {
     # Multicore version.
     conf$sl_fn = get_sl_fn(parallel = "multicore", crossvalidate = T,
                   outer_cv_folds = conf$outer_cv_folds)[[fn]]
@@ -66,6 +71,7 @@ libs = individual_library_seq(dim(X), type = "regression", glm = F)
 length(libs)
 
 # Use L'Ecuyer for multicore seeds; see ?set.seed for details.
+# TODO: set multinode seed where necessary.
 set.seed(1, "L'Ecuyer-CMRG")
 
 # Review final data dimensions.
@@ -73,7 +79,7 @@ dim(X)
 
 # Temporaryily reduce library size.
 # rpartPrune not working :/
-libs = libs[1:4]
+# libs = libs[1:4]
 
 results = fit_model_libs(Y, X, libs, family=gaussian(), sl_fn = conf$sl_fn,
                      cv_folds = conf$cv_folds)
@@ -95,8 +101,8 @@ lib_names = c("Mean", "Pruned Tree", "Elastic Net", "Elastic Net",
               "Elastic Net screener + OLS",
               "Random Forest", "Gradient Boosted Machine",
               "XGBoost (GBM)", "XGBoost (GBM)")
-analyze_results = plot_all_results(results, tbi$Y, "TBI-indiv", libs,
-                 plot_dir = paste0(conf$dir, "/visuals/"),
-                 tex_dir = paste0(conf$dir, "/tex/"), lib_names = lib_names)
-save(analyze_results, file=paste0(conf$dir, "/data/predict-indiv-analysis.RData"))
+analyze_results = plot_all_results(results, Y, "indiv", libs,
+                 plot_dir = paste0(conf$visual_dir, "/visuals/"),
+                 tex_dir = paste0(conf$tex_dir, "/tex/"), lib_names = lib_names)
+save(analyze_results, file=paste0(conf$data_dir, "/predict-indiv-analysis.RData"))
 ```
