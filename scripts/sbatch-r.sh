@@ -44,17 +44,6 @@ done
 # module load r
 
 # Load a newer version of gcc than the default.
-module load gcc/4.8.5
+module load gcc/4.8.5 java lapack
 
-# Load Java if any R packages need RJava (bartMachine, h2o, etc.)
-module load java
-
-# Load a better linear algebra system.
-module load lapack
-
-# knitr does not support subdirectories - need to use cd.
-cd $dir_output
-# This assumes we are in a subdirectory; remove "../" if not.
-Rscript -e "knitr::knit('../$file.Rmd', '$file.md')" 2>&1
-# Convert markdown to html once the Rmd file is complete.
-Rscript -e "markdown::markdownToHTML('$file.md', '$file.html')"
+R CMD BATCH --no-save --no-restore ${file}.R ${dir_output}/${file}.out

@@ -22,8 +22,8 @@ OUTPUT_DIR=output
 
 all: install data analysis
 
-install: install.R ${SCRIPT_DIR}/sbatch-install.sh
-	${SBATCH} ${SCRIPT_DIR}/sbatch-install.sh
+install: install.R
+	${SBATCH} --nodes 1 ${SCRIPT_DIR}/sbatch-r.sh --file=install.R
 
 #setup: setup-cluster.sh
 #	bash $^
@@ -31,26 +31,30 @@ install: install.R ${SCRIPT_DIR}/sbatch-install.sh
 data: merge-data create-dataset
 
 create-dataset: create-dataset.Rmd
-	Rscript -e "knitr::knit('create-dataset.Rmd')" 2>&1
+	${SBATCH} --nodes 1 ${SCRIPT_DIR}/sbatch-rmd.sh --file=create-dataset --dir=${OUTPUT_DIR}
 
 merge-data:
-	${SBATCH} ${SCRIPT_DIR}/sbatch-rmd.sh --file=merge-data --dir=${OUTPUT_DIR}
+	${SBATCH} --nodes 1 ${SCRIPT_DIR}/sbatch-rmd.sh --file=merge-data --dir=${OUTPUT_DIR}
 
 #sbatch -A $ACCOUNT -p $PARTITION --qos=biostat_normal -N 1 -t 5:00:00 --wrap "Rscript -e \"knitr::knit('merge-data.Rmd')\" 2>&1"
 
 vim: variable-importance.Rmd
-	${SBATCH} scripts/sbatch-vim.sh
+	#${SBATCH} --nodes 2 scripts/sbatch-vim.sh
+	${SBATCH} --nodes 2 ${SCRIPT_DIR}/sbatch-rmd.sh --file=variable-importance --dir=${OUTPUT_DIR}
 
 predict-cumu: predict-cumulative.Rmd
-	${SBATCH} scripts/sbatch-predict-cumu.sh
+	#${SBATCH} --nodes 2 ${SCRIPT_DIR}/sbatch-predict-cumu.sh
+	${SBATCH} --nodes 2 ${SCRIPT_DIR}/sbatch-rmd.sh --file=predict-cumulative --dir=${OUTPUT_DIR}
 
 predict-indiv: create-dataset.Rmd predict-individual.Rmd
-	${SBATCH} scripts/sbatch-predict-indiv.sh
+	#${SBATCH} --nodes 2 ${SCRIPT_DIR}/sbatch-predict-indiv.sh
+	${SBATCH} --nodes 2 ${SCRIPT_DIR}/sbatch-rmd.sh --file=predict-individual --dir=${OUTPUT_DIR}
 
 bash:
 	# Start a bash session with 2 nodes, for up to 5 hours.
 	srun -A $ACCOUNT -p $PARTITION --qos $QOS  -N 2 -t 5:00:00 --pty bash
 
+# Next line ensures that this rule works even if there's a file named "clean".
 .PHONY : clean
 clean:
 	rm -f *.Rout
