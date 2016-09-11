@@ -8,7 +8,7 @@ load_all_packages = function(auto_install = F, update = F) {
 
   libs = c("arm", "arules", "bartMachine", "caret", "class", "cvAUC",
            "cvTools", "doMC", "doParallel", "doSNOW", "dplyr", "e1071", "earth",
-           "foreach", "foreign", "gam", "ggplot2", "glmnet", "gplots", "haven",
+           "foreach", "foreign", "gam", "gbm", "ggplot2", "glmnet", "gplots", "haven",
            "histogram", "hopach", "ipred", "MASS", "multtest", "parallel", "party",
            "polspline", "qdapTools", "quantreg", "randomForest", "RColorBrewer",
            "rJava", "reader", "readstata13", "readxl", "ROCR",
