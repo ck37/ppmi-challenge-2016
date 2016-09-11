@@ -46,7 +46,7 @@ if (is.null(conf$cluster) || is.na(conf$cluster)) {
 }
 
 #test_fn = function() {
-lib = create_SL_lib()
+lib_obj = create_SL_lib()
 
 snow::clusterExport(conf$cluster, "lib_obj")#, environment())
 # List the sl_env
