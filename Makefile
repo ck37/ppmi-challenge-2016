@@ -37,7 +37,7 @@ setup: setup.R
 
 # Dependencies: merge-data
 create-dataset: create-dataset.Rmd
-	${SBATCH} --nodes 1 ${SCRIPT_DIR}/sbatch-rmd.sh --file=create-dataset --dir=${OUTPUT_DIR}
+	${SBATCH} --nodes 1 ${SCRIPT_DIR}/sbatch-rmd.sh --file=$< --dir=${OUTPUT_DIR}
 
 # Dependencies: install
 merge-data: merge-data.Rmd

@@ -32,6 +32,9 @@ do
 case $i in
     -f=*|--file=*)
     file="${i#*=}"
+    shopt -s extglob    # Turn on extended pattern support
+    # Remove .Rmd if it's included in the filename.
+    file=${file/\.Rmd$//)
     ;;
     -d=*|--dir=*)
     dir_output="${i#*=}"
