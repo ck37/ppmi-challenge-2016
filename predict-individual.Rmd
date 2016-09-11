@@ -77,10 +77,6 @@ Y = dataset$outcomes$progression
 libs = individual_library_seq(dim(X), type = "regression", glm = F)
 length(libs)
 
-# Use L'Ecuyer for multicore seeds; see ?set.seed for details.
-# TODO: set multinode seed where necessary.
-set.seed(1, "L'Ecuyer-CMRG")
-
 # Review final data dimensions.
 dim(X)
 
