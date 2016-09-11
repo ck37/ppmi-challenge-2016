@@ -218,7 +218,12 @@ fit_model_libs = function(Y, data, libs, family=binomial(), sl_fn, cv_folds = 10
         # Export custom learners across the cluster to each worker.
         cat(paste0("Attempting to export this learners (", length(ls(lib_obj$sl_env)), ") ",
                    paste(ls(lib_obj$sl_env), collapse = ", "), "\n"))
-        snow::clusterExport(cluster, ls(lib_obj$sl_env), lib_obj$sl_env)
+        # This doesn't seem to work:
+        #snow::clusterExport(cluster, ls(lib_obj$sl_env), lib_obj$sl_env)
+        # Export lib_obj, which is defined in this function's environment.
+        snow::clusterExport(cluster, "lib_obj", environment())
+        # Now attach the sl_env environment in each worker.
+        snow::clusterEvalQ(cluster, "attach(lib_obj$sl_env)")
       }
     }
 

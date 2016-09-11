@@ -64,7 +64,7 @@ Y_raw = raw_dataset$outcomes$progression
 
 ## VarImpact() analysis (run manually - takes 60+ mins)
 
-```{r varimpact, error=F, eval=F}
+```{r varimpact, error=F, eval=T}
 
 library(varImpact)
 
@@ -105,13 +105,6 @@ stopifnot(sum(sapply(X_raw2, is.factor)) == 0)
 # Confirm X_raw has no strings.
 stopifnot(sum(sapply(X_raw2, is.character)) == 0)
 
-#str(X_raw, list.len=ncol(X_raw))
-
-#X_raw2 = subset(X_raw, select=c(scau23, scau25, vltveg, updrs_score_p3, drmagrac, np2eat))
-
-# summary(X_raw$np2eat)
-# table(X_raw$np2eat)
-
 # 33 minutes on 4 cores; X minutes on 24 cores; X minutes on 96 cores.
 #vim = varImpact(Y, X, V=V, g.library=g_lib, Q.library=Q_lib, parallel = T,
 if (F) {
@@ -132,14 +125,9 @@ if (class(vim) == "try-error") {
   print(vim$results_all)
   
   addtorow = list("pos" = list(0))
-  #addtorow$pos[[1]] <- c(0)
   addtorow$command = paste("\\hline", "\\endhead", "\\hline",
             "\\multicolumn{3}{l}{\\footnotesize Continued on next page}",
             "\\endfoot", "\\endlastfoot", sep = " \n")
-  
-  # Make a copy to customize the rounding.
-  #vim_latex = vim
-  #vim_latex$results_consistent$Estimate = round(vim_latex$results_consistent$Estimate, 2)
   
   exportLatex(vim, outname = "vim_", dir = paste0(conf$tex_dir, "/"),
               tabular.environment = "longtable",
