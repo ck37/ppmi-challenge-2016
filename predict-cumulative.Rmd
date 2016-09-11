@@ -61,10 +61,10 @@ set.seed(1, "L'Ecuyer-CMRG")
 X = dataset$X
 Y = dataset$outcomes$progression
 
-libs = cumulative_library_seq(dim(X), type = "regression", glm=F)
+libs = cumulative_library_seq(dim(X), type = "regression", glm = F)
 length(libs)
 
-#libs = libs[c(2, 5, 7)]
+libs = libs[4:5]
 #libs = libs[c(1, 2, 3, 4, 5, 7)]
 
 results = fit_model_libs(Y, X, libs,
