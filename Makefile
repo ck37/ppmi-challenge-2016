@@ -6,9 +6,15 @@
 # Savio configuration.
 ACCOUNT=co_biostat
 PARTITION=savio2
-# Choose one QOS and comment out the other.
-#QOS=biostat_normal
-QOS=savio_lowprio
+
+# This allows us to override the default QOS by setting an environmental variable.
+# e.g. we run in BASH: "export QOS=biostat_normal"
+ifndef QOS
+	# Choose one QOS and comment out the other.
+	#QOS=biostat_normal
+	QOS=savio_lowprio
+endif
+
 SBATCH=sbatch -A ${ACCOUNT} -p ${PARTITION} --qos ${QOS}
 
 ######
