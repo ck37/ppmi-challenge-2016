@@ -14,15 +14,15 @@ load_all_packages = function(auto_install = F, update = F) {
            "rJava", "reader", "readstata13", "readxl", "ROCR",
            "rpart", "SparseM", "tidyr", "tmle", "xgboost", "xtable")
 
-  # NOTE: may want to install the latest xgboost from github.
-  # Can run this manually:
-  if (!require("xgboost")) {
-    drat:::addRepo("dmlc")
-    install.packages("xgboost", repos="http://dmlc.ml/drat/", type = "source")
-  }
-
   # Hide the huge amount of startup message text.
   suppressMessages({
+
+    # NOTE: may want to install the latest xgboost from github.
+    # Can run this manually:
+    if (!require("xgboost")) {
+      drat:::addRepo("dmlc")
+      install.packages("xgboost", repos="http://dmlc.ml/drat/", type = "source")
+    }
 
     # Install devtools if we don't already have it.
     if (!require("devtools")) {
