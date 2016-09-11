@@ -46,7 +46,7 @@ if (is.null(conf$cluster) || is.na(conf$cluster)) {
   rm(fn)
 } else {
   # Multinode version.
-  conf$sl_fn = get_sl_fn(parallel = "snow", crossvalidate = T,
+  conf$sl_fn = ckTools::gen_superlearner(parallel = "snow",
                   cluster = conf$cluster,
                   outer_cv_folds = conf$outer_cv_folds)$cv_sl_fn
 }
