@@ -63,6 +63,14 @@ load(paste0(conf$dir, "/data/create-dataset.RData"))
 conf = conf_backup
 rm(conf_backup)
 
+if (foreach::getDoParName() == "doSNOW") {
+  # Set multinode-compatible seed.
+  clusterSetRNGStream(conf$cluster, iseed = 1)
+} else {
+  # Set multicore-compatible seed.
+  set.seed(1, "L'Ecuyer-CMRG")
+}
+
 X = dataset$X
 Y = dataset$outcomes$progression
 

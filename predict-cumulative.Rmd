@@ -14,7 +14,7 @@ conf = list(data_dir = "data", dir = ".")
 ```{r predict-setup}
 # Setup multinode processing if available.
 # Just use multicore for now.
-conf$cluster = ckTools::parallelize(allow_multinode = T)
+conf$cluster = ckTools::parallelize(allow_multinode = T, type = "doSNOW")
 
 #conf$method = "method.AUC"
 conf$method = "method.NNLS"
@@ -54,9 +54,13 @@ if (is.null(conf$cluster) || is.na(conf$cluster)) {
 ```{r predict}
 load(paste0(conf$data_dir, "/create-dataset.RData"))
 
-# Use L'Ecuyer for multicore seeds; see ?set.seed for details.
-set.seed(1, "L'Ecuyer-CMRG")
-# TODO: set multinode seed if needed.
+if (foreach::getDoParName() == "doSNOW") {
+  # Set multinode-compatible seed.
+  clusterSetRNGStream(conf$cluster, iseed = 1)
+} else {
+  # Set multicore-compatible seed.
+  set.seed(1, "L'Ecuyer-CMRG")
+}
 
 X = dataset$X
 Y = dataset$outcomes$progression
@@ -90,4 +94,8 @@ plot_all_results(results, dataset$outcomes$progresson, "PD", libs,
                  tex_dir = paste0(conf$dir, "/tex/"))
 }
 
+```
+
+```{r}
+ckTools::stop_cluster(conf$cluster)
 ```
