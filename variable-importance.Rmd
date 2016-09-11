@@ -5,7 +5,7 @@ source("lib/function_library.R", echo=F)
 load_all_code("lib")
 
 # Load a bunch of required packages, installing missing ones as needed.
-load_all_packages(auto_install = T)
+load_all_packages(auto_install = F)
 
 # Set some standard settings.
 conf = list(dir = ".",
@@ -140,8 +140,7 @@ if (class(vim) == "try-error") {
                            vim$results_consistent)
   
   file = paste0(paste(conf$tex_dir, "vim_", sep = "/"), "varimpConsistent.tex")
-  library(xtable)
-  print(xtable(consistent_table,
+  print(xtable::xtable(consistent_table,
               caption = "Subset of of Significant and ``Consistent'' Results",
               label = "consisRes",
               digits = c(0, 0, 0, 0, 2, 4)),
