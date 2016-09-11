@@ -69,7 +69,7 @@ length(libs)
 
 results = fit_model_libs(Y, X, libs,
                          family=gaussian(), sl_fn = conf$sl_fn,
-                         cv_folds = conf$cv_folds)
+                         cv_folds = conf$cv_folds, cluster = conf$cluster)
 
 save(results, libs, conf, dataset,
      file=paste0(conf$data_dir, "/predict_results.RData"))
