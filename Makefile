@@ -64,7 +64,7 @@ predict-cumu: predict-cumulative.Rmd
 
 # Dependencies: create-dataset
 predict-indiv: predict-individual.Rmd
-	${SBATCH} --nodes 1 --job-name=$< --output=$<.out ${SCRIPT_DIR}/sbatch-rmd.sh --file=$< --dir=${OUTPUT_DIR}
+	${SBATCH} --nodes 4 --job-name=$< --output=$<.out ${SCRIPT_DIR}/sbatch-rmd.sh --file=$< --dir=${OUTPUT_DIR}
 
 bash:
 	# Start a bash session with 2 nodes, for up to 5 hours.

@@ -5,7 +5,7 @@ source("lib/function_library.R", echo = F)
 load_all_code("lib")
 
 # Load a bunch of required packages, installing missing ones as needed.
-load_all_packages(auto_install = T)
+load_all_packages(auto_install = F)
 
 conf = list(verbose = F,
             dir = ".",
@@ -17,7 +17,7 @@ conf = list(verbose = F,
 ```{r predict-setup}
 
 # Setup multinode/multicore processing if available.
-conf$cluster = ckTools::parallelize(allow_multinode = F)
+conf$cluster = ckTools::parallelize(allow_multinode = T)
 
 #conf$method = "method.AUC"
 conf$method = "method.NNLS"
@@ -83,6 +83,9 @@ dim(X)
 # Temporaryily reduce library size.
 # rpartPrune not working :/
 # libs = libs[1:4]
+
+# Test glmnet and XGB
+libs = libs[c(3, 11)]
 
 results = fit_model_libs(Y, X, libs, family=gaussian(), sl_fn = conf$sl_fn,
                      cv_folds = conf$cv_folds, cluster = conf$cluster)
