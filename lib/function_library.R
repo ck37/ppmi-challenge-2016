@@ -205,7 +205,8 @@ plot_all_results = function(results, Y, Y_name, libs, type="classification",
   return(invisible(new_results))
 }
 
-fit_model_libs = function(Y, data, libs, family=binomial(), sl_fn, cv_folds = 10) {
+fit_model_libs = function(Y, data, libs, family=binomial(), sl_fn, cv_folds = 10,
+                          cluster = NULL) {
   results = vector("list", length(libs))
   for (lib_i in 1:length(libs)) {
     lib_obj = libs[[lib_i]]
@@ -216,6 +217,10 @@ fit_model_libs = function(Y, data, libs, family=binomial(), sl_fn, cv_folds = 10
     if ("sl_env" %in% names(lib_obj)) {
       #cat("Attaching custom SuperLearner environment.\n")
       attach(lib_obj$sl_env)
+      if (!is.null(cluster) && !is.na(cluster)) {
+        # Export custom learners across the cluster to each worker.
+        clusterExport(cluster, ls(sl_env), lib_obj$sl_env)
+      }
     }
 
 
