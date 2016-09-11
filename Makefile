@@ -43,6 +43,9 @@ analysis: predict-indiv predict-cumu vim
 setup: setup.R
 	${SBATCH} --nodes 1 --job-name=$< ${SCRIPT_DIR}/sbatch-r.sh --file=$<
 
+test: test.R
+	${SBATCH} --nodes 2 --job-name=$< ${SCRIPT_DIR}/sbatch-r.sh --file=$<
+
 # Dependencies: merge-data
 create-dataset: create-dataset.Rmd
 	${SBATCH} --nodes 1 --job-name=$< ${SCRIPT_DIR}/sbatch-rmd.sh --file=$< --dir=${OUTPUT_DIR}
