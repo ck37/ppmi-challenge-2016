@@ -46,4 +46,4 @@ done
 # Load a newer version of gcc than the default.
 module load gcc/4.8.5 java lapack
 
-R CMD BATCH --no-save --no-restore ${file}.R ${dir_output}/${file}.out
+R CMD BATCH --no-save --no-restore ${file} ${dir_output}/${file}.out
