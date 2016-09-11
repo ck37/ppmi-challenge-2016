@@ -29,7 +29,7 @@ conf$cv_folds = 10
 # If the cluster object is null it means we're setup for multicore (or nuthin).
 if (is.null(conf$cluster) || is.na(conf$cluster)) {
   # Use non-CV if we're running this in RStudio on a laptop.
-  if (T || .Platform$GUI == "RStudio") {
+  if (.Platform$GUI == "RStudio") {
     fn = "sl_fn"
   } else {
     fn = "cv_sl_fn"
