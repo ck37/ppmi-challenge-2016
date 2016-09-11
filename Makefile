@@ -36,10 +36,10 @@ install: install.R
 
 data: merge-data create-dataset
 
-create-dataset: create-dataset.Rmd
+create-dataset: merge-data create-dataset.Rmd
 	${SBATCH} --nodes 1 ${SCRIPT_DIR}/sbatch-rmd.sh --file=create-dataset --dir=${OUTPUT_DIR}
 
-merge-data:
+merge-data: install merge-data.Rmd
 	${SBATCH} --nodes 1 ${SCRIPT_DIR}/sbatch-rmd.sh --file=merge-data --dir=${OUTPUT_DIR}
 
 #sbatch -A $ACCOUNT -p $PARTITION --qos=biostat_normal -N 1 -t 5:00:00 --wrap "Rscript -e \"knitr::knit('merge-data.Rmd')\" 2>&1"
@@ -48,11 +48,11 @@ vim: variable-importance.Rmd
 	#${SBATCH} --nodes 2 scripts/sbatch-vim.sh
 	${SBATCH} --nodes 2 ${SCRIPT_DIR}/sbatch-rmd.sh --file=variable-importance --dir=${OUTPUT_DIR}
 
-predict-cumu: predict-cumulative.Rmd
+predict-cumu: create-dataset predict-cumulative.Rmd
 	#${SBATCH} --nodes 2 ${SCRIPT_DIR}/sbatch-predict-cumu.sh
 	${SBATCH} --nodes 2 ${SCRIPT_DIR}/sbatch-rmd.sh --file=predict-cumulative --dir=${OUTPUT_DIR}
 
-predict-indiv: create-dataset.Rmd predict-individual.Rmd
+predict-indiv: create-dataset predict-individual.Rmd
 	#${SBATCH} --nodes 2 ${SCRIPT_DIR}/sbatch-predict-indiv.sh
 	${SBATCH} --nodes 2 ${SCRIPT_DIR}/sbatch-rmd.sh --file=predict-individual --dir=${OUTPUT_DIR}
 
