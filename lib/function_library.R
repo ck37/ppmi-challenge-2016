@@ -6,26 +6,29 @@ load_all_packages = function(auto_install = F, update = F) {
   # Output R version so we know which package versions we're using.
   cat(R.version.string, "\n")
 
-  libs = c("arm", "arules", "bartMachine", "caret", "class", "cvAUC",
+  libs = c("arm", "arules", "bartMachine", "caret", "ckTools", "class", "cvAUC",
            "cvTools", "doMC", "doParallel", "doSNOW", "dplyr", "e1071", "earth",
            "foreach", "foreign", "gam", "gbm", "ggplot2", "glmnet", "gplots", "haven",
            "histogram", "hopach", "ipred", "MASS", "multtest", "parallel", "party",
            "polspline", "qdapTools", "quantreg", "randomForest", "RColorBrewer",
-           "rJava", "reader", "readstata13", "readxl", "ROCR",
-           "rpart", "SparseM", "tidyr", "tmle", "xgboost", "xtable")
+           "rJava", "reader", "readstata13", "readxl", "ROCR", "rpart", "SparseM",
+           "SuperLearner", "tidyr", "tmle", "xgboost", "xtable", "varImpact")
 
   # Hide the huge amount of startup message text.
   suppressMessages({
 
     # NOTE: may want to install the latest xgboost from github.
     # Can run this manually:
-    if (!require("xgboost")) {
+    if (!require("xgboost") && auto_install) {
+      if (!require("drat") && auto_install) {
+        install.packages("drat")
+      }
       drat:::addRepo("dmlc")
       install.packages("xgboost", repos="http://dmlc.ml/drat/", type = "source")
     }
 
     # Install devtools if we don't already have it.
-    if (!require("devtools")) {
+    if (!require("devtools") && auto_install) {
       install.packages("devtools")
       library(devtools)
     }
@@ -42,8 +45,10 @@ load_all_packages = function(auto_install = F, update = F) {
     })
 
     # Install ckTools and varImpact, and we need the latest SuperLearner from github.
-    devtools::install_github(c("ecpolley/SuperLearner", "ck37/ckTools", "ck37/varImpact"),
+    if (auto_install) {
+      devtools::install_github(c("ecpolley/SuperLearner", "ck37/ckTools", "ck37/varImpact"),
                              dependencies=T)
+    }
 
     ckTools::load_packages(libs, auto_install, update)
   }) #suppressMessages
