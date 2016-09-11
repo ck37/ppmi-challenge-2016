@@ -216,7 +216,7 @@ fit_model_libs = function(Y, data, libs, family=binomial(), sl_fn, cv_folds = 10
       attach(lib_obj$sl_env)
       if (!is.null(cluster) && !is.na(cluster)) {
         # Export custom learners across the cluster to each worker.
-        clusterExport(cluster, ls(sl_env), lib_obj$sl_env)
+        clusterExport(cluster, ls(lib_obj$sl_env), lib_obj$sl_env)
       }
     }
 
