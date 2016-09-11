@@ -1,5 +1,5 @@
 ```{r init}
-source("lib/function_library.R", echo=F)
+source("lib/function_library.R", echo = F)
 
 # Load other R source files in the lib directory.
 load_all_code("lib")
@@ -76,13 +76,13 @@ results = fit_model_libs(Y, X, libs,
                          cv_folds = conf$cv_folds, cluster = conf$cluster)
 
 save(results, libs, conf, dataset,
-     file=paste0(conf$data_dir, "/predict_results.RData"))
+     file = paste0(conf$data_dir, "/predict_results.RData"))
 ```
 
 Process results.
 
 ```{r predict-results}
-load(file=paste0(conf$data_dir, "/predict_results.RData"))
+load(paste0(conf$data_dir, "/predict_results.RData"))
 
 # Create plots and generate tables for all results.
 # TODO: update this function to support RMSE rather than AUC as the metric.
@@ -96,6 +96,6 @@ plot_all_results(results, dataset$outcomes$progresson, "PD", libs,
 
 ```
 
-```{r}
+```{r cleanup}
 ckTools::stop_cluster(conf$cluster)
 ```

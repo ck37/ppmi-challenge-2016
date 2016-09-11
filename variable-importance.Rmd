@@ -164,7 +164,7 @@ if (class(vim) == "try-error") {
   openxlsx::write.xlsx(consistent_table, file="output/vim-consistent-table.xlsx")
   
   save(vim, conf, dataset, raw_dataset,
-     file=paste0(conf$data_dir, "/varimpact_analysis.RData"))
+     file = paste0(conf$data_dir, "/varimpact_analysis.RData"))
 }
 ```
 
@@ -359,3 +359,7 @@ To be added.
 ## Univariate correlation benchmark
 
 To be added.
+
+```{r cleanup}
+ckTools::stop_cluster(conf$cluster)
+```

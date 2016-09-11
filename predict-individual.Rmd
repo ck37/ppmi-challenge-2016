@@ -1,5 +1,5 @@
 ```{r init}
-source("lib/function_library.R", echo=F)
+source("lib/function_library.R", echo = F)
 
 # Load other R source files in the lib directory.
 load_all_code("lib")
@@ -87,13 +87,13 @@ dim(X)
 results = fit_model_libs(Y, X, libs, family=gaussian(), sl_fn = conf$sl_fn,
                      cv_folds = conf$cv_folds, cluster = conf$cluster)
 
-save(results, libs, conf, dataset, file=paste0(conf$data_dir, "/predict-indiv-results.RData"))
+save(results, libs, conf, dataset, file = paste0(conf$data_dir, "/predict-indiv-results.RData"))
 ```
 
 Process results.
 
 ```{r process-results, eval=F}
-load(file=paste0(conf$data_dir, "/predict-indiv-results.RData"))
+load(paste0(conf$data_dir, "/predict-indiv-results.RData"))
 
 # TODO: update this for PPMI!!!
 
@@ -108,4 +108,8 @@ analyze_results = plot_all_results(results, Y, "indiv", libs,
                  plot_dir = paste0(conf$visual_dir, "/visuals/"),
                  tex_dir = paste0(conf$tex_dir, "/tex/"), lib_names = lib_names)
 save(analyze_results, file=paste0(conf$data_dir, "/predict-indiv-analysis.RData"))
+```
+
+```{r cleanup}
+ckTools::stop_cluster(conf$cluster)
 ```
