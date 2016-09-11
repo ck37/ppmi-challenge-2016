@@ -53,15 +53,15 @@ merge-data: merge-data.Rmd
 
 # Dependencies: create-dataset
 vim: variable-importance.Rmd
-	${SBATCH} --nodes 2 --job-name=$< ${SCRIPT_DIR}/sbatch-rmd.sh --file=$< --dir=${OUTPUT_DIR}
+	${SBATCH} --nodes 1 --job-name=$< ${SCRIPT_DIR}/sbatch-rmd.sh --file=$< --dir=${OUTPUT_DIR}
 
 # Dependencies: create-dataset
 predict-cumu: predict-cumulative.Rmd
-	${SBATCH} --nodes 6 --job-name=$< ${SCRIPT_DIR}/sbatch-rmd.sh --file=$< --dir=${OUTPUT_DIR}
+	${SBATCH} --nodes 1 --job-name=$< ${SCRIPT_DIR}/sbatch-rmd.sh --file=$< --dir=${OUTPUT_DIR}
 
 # Dependencies: create-dataset
 predict-indiv: predict-individual.Rmd
-	${SBATCH} --nodes 6 --job-name=$< ${SCRIPT_DIR}/sbatch-rmd.sh --file=$< --dir=${OUTPUT_DIR}
+	${SBATCH} --nodes 1 --job-name=$< ${SCRIPT_DIR}/sbatch-rmd.sh --file=$< --dir=${OUTPUT_DIR}
 
 bash:
 	# Start a bash session with 2 nodes, for up to 5 hours.

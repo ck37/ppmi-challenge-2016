@@ -17,7 +17,7 @@ conf = list(verbose = F,
 ```{r predict-setup}
 
 # Setup multinode/multicore processing if available.
-conf$cluster = ckTools::parallelize(allow_multinode = T)
+conf$cluster = ckTools::parallelize(allow_multinode = F)
 
 #conf$method = "method.AUC"
 conf$method = "method.NNLS"

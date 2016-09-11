@@ -14,7 +14,7 @@ conf = list(data_dir = "data", dir = ".")
 ```{r predict-setup}
 # Setup multinode processing if available.
 # Just use multicore for now.
-conf$cluster = ckTools::parallelize(allow_multinode = T, type = "doSNOW")
+conf$cluster = ckTools::parallelize(allow_multinode = F)#, type = "doSNOW")
 
 #conf$method = "method.AUC"
 conf$method = "method.NNLS"
