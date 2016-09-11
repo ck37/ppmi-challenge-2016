@@ -9,7 +9,7 @@ PARTITION=savio2
 # Choose one QOS and comment out the other.
 #QOS=biostat_normal
 QOS=savio_lowprio
-SBATCH=sbatch -A $ACCOUNT -p $PARTION --qos $QOS
+SBATCH=sbatch -A ${ACCOUNT} -p ${PARTITION} --qos ${QOS}
 
 ######
 # Makefile configuration.
@@ -52,7 +52,7 @@ predict-indiv: create-dataset.Rmd predict-individual.Rmd
 
 bash:
 	# Start a bash session with 2 nodes, for up to 5 hours.
-	srun -A $ACCOUNT -p $PARTITION --qos $QOS  -N 2 -t 5:00:00 --pty bash
+	srun -A ${ACCOUNT} -p ${PARTITION} --qos $QOS  -N 2 -t 5:00:00 --pty bash
 
 # Next line ensures that this rule works even if there's a file named "clean".
 .PHONY : clean
