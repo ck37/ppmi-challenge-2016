@@ -1,7 +1,8 @@
 #' Load all packages needed, installing any missing packages from CRAN.
 #'
 #' @param auto_install Install any packages that could not be loaded.
-load_all_packages = function(auto_install = F) {
+#' @param update Update any packages that can be updated.
+load_all_packages = function(auto_install = F, update = F) {
   # Output R version so we know which package versions we're using.
   cat(R.version.string, "\n")
 
@@ -15,7 +16,7 @@ load_all_packages = function(auto_install = F) {
 
   # NOTE: may want to install the latest xgboost from github.
   # Can run this manually:
-  if (F && !require("xgboost")) {
+  if (!require("xgboost")) {
     drat:::addRepo("dmlc")
     install.packages("xgboost", repos="http://dmlc.ml/drat/", type = "source")
   }
@@ -29,26 +30,22 @@ load_all_packages = function(auto_install = F) {
       library(devtools)
     }
 
-    # Install ckTools if we don't already have it.
-    if (!require("ckTools")) {
-      devtools::install_github("ck37/ckTools")
-      library(ckTools)
-    }
+    # Install bioconductor. We need to use http on Savio.
+    source("http://bioconductor.org/biocLite.R")
+    # Install bioconductor and update installed packages.
+    biocLite(ask=F)
 
-    # Install varImpact if we don't already have it.
-    if (!require("varImpact")) {
-      devtools::install_github("ck37/varImpact")
-      library(varImpact)
-    }
+    # Install additional bioc packages if they aren't already installed.
+    sapply(c("hopach", "multtest"), function(pkg) {
+      if (!require(pkg, character.only=T))
+        biocLite(pkg) || "newly installed" else "already installed"
+    })
 
-    # Install SuperLearner from github if we don't have it or have an old version.
-    if (!require("SuperLearner")
-        || (as.POSIXct(utils::packageDescription('SuperLearner')$Date)
-            < as.POSIXct("2016-04-06"))) {
-      devtools::install_github("ecpolley/SuperLearner")
-    }
+    # Install ckTools and varImpact, and we need the latest SuperLearner from github.
+    devtools::install_github(c("ecpolley/SuperLearner", "ck37/ckTools", "ck37/varImpact"),
+                             dependencies=T)
 
-    ckTools::load_packages(libs, auto_install)
+    ckTools::load_packages(libs, auto_install, update)
   }) #suppressMessages
 }
 
