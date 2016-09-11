@@ -64,7 +64,7 @@ Y_raw = raw_dataset$outcomes$progression
 
 ## VarImpact() analysis (run manually - takes 60+ mins)
 
-```{r varimpact, error=F, eval=T}
+```{r varimpact, error=F, eval=F}
 
 library(varImpact)
 
