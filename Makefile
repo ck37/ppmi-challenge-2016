@@ -41,19 +41,19 @@ create-dataset: create-dataset.Rmd
 
 # Dependencies: install
 merge-data: merge-data.Rmd
-	${SBATCH} --nodes 1 ${SCRIPT_DIR}/sbatch-rmd.sh --file=merge-data --dir=${OUTPUT_DIR}
+	${SBATCH} --nodes 1 ${SCRIPT_DIR}/sbatch-rmd.sh --file=$< --dir=${OUTPUT_DIR}
 
 # Dependencies: create-dataset
 vim: variable-importance.Rmd
-	${SBATCH} --nodes 2 ${SCRIPT_DIR}/sbatch-rmd.sh --file=variable-importance --dir=${OUTPUT_DIR}
+	${SBATCH} --nodes 2 ${SCRIPT_DIR}/sbatch-rmd.sh --file=$< --dir=${OUTPUT_DIR}
 
 # Dependencies: create-dataset
 predict-cumu: predict-cumulative.Rmd
-	${SBATCH} --nodes 6 ${SCRIPT_DIR}/sbatch-rmd.sh --file=predict-cumulative --dir=${OUTPUT_DIR}
+	${SBATCH} --nodes 6 ${SCRIPT_DIR}/sbatch-rmd.sh --file=$< --dir=${OUTPUT_DIR}
 
 # Dependencies: create-dataset
 predict-indiv: predict-individual.Rmd
-	${SBATCH} --nodes 6 ${SCRIPT_DIR}/sbatch-rmd.sh --file=predict-individual --dir=${OUTPUT_DIR}
+	${SBATCH} --nodes 6 ${SCRIPT_DIR}/sbatch-rmd.sh --file=$< --dir=${OUTPUT_DIR}
 
 bash:
 	# Start a bash session with 2 nodes, for up to 5 hours.
