@@ -33,7 +33,7 @@ data: merge-data create-dataset
 analysis: predict-indiv predict-cumu vim
 
 setup: setup.R
-	${SBATCH} --nodes 1 ${SCRIPT_DIR}/sbatch-r.sh --file=install.R
+	${SBATCH} --nodes 1 ${SCRIPT_DIR}/sbatch-r.sh --file=$<
 
 # Dependencies: merge-data
 create-dataset: create-dataset.Rmd
