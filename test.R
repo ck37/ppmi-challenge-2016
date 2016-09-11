@@ -54,5 +54,7 @@ snow::clusterEvalQ(conf$cluster, "ls(lib_obj$sl_env)")
 # Now attach the sl_env environment in each worker.
 snow::clusterEvalQ(conf$cluster, "attach(lib_obj$sl_env)")
 
+snow::clusterEvalQ(conf$cluster, "ls()")
+
 # Close out the cluster.
 stop_cluster(conf$cluster)
