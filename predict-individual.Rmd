@@ -4,7 +4,7 @@ source("lib/function_library.R", echo = F)
 # Load other R source files in the lib directory.
 load_all_code("lib")
 
-# Load a bunch of required packages, installing missing ones as needed.
+# Load a bunch of required packages; optionally installing missing ones as needed.
 load_all_packages(auto_install = F)
 
 conf = list(verbose = F,

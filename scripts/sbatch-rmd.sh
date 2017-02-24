@@ -27,6 +27,7 @@
 # Output to current directory by default. Overriden by --dir option.
 dir_output=.
 
+# Extract command line arguments
 for i in "$@"
 do
 case $i in

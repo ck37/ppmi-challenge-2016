@@ -1,5 +1,5 @@
 ```{r init}
-source("lib/function_library.R", echo=F)
+source("lib/function_library.R", echo = F)
 
 # Load other R source files in the lib directory.
 load_all_code("lib")
@@ -82,7 +82,8 @@ Q_lib = c("SL.glmnet", "SL.mean", "SL.randomForest")#, "SL.bayesglm")#, "SL.gam"
 # g_lib = c("SL.stepAIC", "SL.mean")
 # Super fast:
 #Q_lib = c("SL.glmnet", "SL.mean")
-Q_lib = c("SL.glmnet", "SL.randomForest", "SL.mean", "SL.svm", "SL.xgboost")
+#Q_lib = c("SL.glmnet", "SL.randomForest", "SL.mean", "SL.svm", "SL.xgboost")
+Q_lib = c("SL.glmnet", "SL.randomForest", "SL.mean", "SL.svm")
 #Q_lib = c("SL.randomForest", "SL.mean")
 g_lib = c("SL.glmnet", "SL.mean")
 

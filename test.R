@@ -5,7 +5,7 @@ source("lib/function_library.R")
 load_all_code("lib")
 
 # Load a bunch of required packages, installing missing ones as needed.
-load_all_packages(auto_install = T)
+load_all_packages(auto_install = F)
 
 # Set some standard settings.
 conf = list(dir = ".",
@@ -13,7 +13,7 @@ conf = list(dir = ".",
             tex_dir = "tex",
             verbose = T)
 
-conf$cluster = ckTools::parallelize(allow_multinode = T)
+conf$cluster = ckTools::parallelize(allow_multinode = T, type="doSNOW")
 
 conf$method = "method.NNLS"
 
@@ -46,15 +46,23 @@ if (is.null(conf$cluster) || is.na(conf$cluster)) {
 }
 
 #test_fn = function() {
-lib_obj = create_SL_lib()
+lib_obj = create_SL_lib(glmnet = T, glmnet_size = 5, xgb = "small")
+names(lib_obj$sl_env)
 
 snow::clusterExport(conf$cluster, "lib_obj")#, environment())
+snow::clusterExport(conf$cluster, ls(lib_obj$sl_env), lib_obj$sl_env)#, environment())
 # List the sl_env
 snow::clusterEvalQ(conf$cluster, "ls(lib_obj$sl_env)")
 # Now attach the sl_env environment in each worker.
 snow::clusterEvalQ(conf$cluster, "attach(lib_obj$sl_env)")
 
 snow::clusterEvalQ(conf$cluster, "ls()")
+
+combined_ls = foreach(i = 1:foreach::getDoParWorkers()) %dopar% {
+  ls()
+}
+
+print(combined_ls)
 
 # Close out the cluster.
 stop_cluster(conf$cluster)

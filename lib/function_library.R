@@ -319,7 +319,7 @@ cumulative_library_seq = function(data_dims,
   # lib2 = list(lib=c("SL.glmnet", "SL.mean", "SL.glm", "SL.stepAIC", "SL.earth", "SL.rpartPrune"))
   # Remove stepAIC
   #lib2 = list(lib=c(lib1$lib, "SL.earth", "SL.rpartPrune"))
-  #lib2 = list(lib=c("SL.glmnet", "SL.mean", "SL.glm", "SL.earth"))
+  lib2 = list(lib=c("SL.glmnet", "SL.mean", "SL.glm", "SL.earth"))
   #cat("Total models:", length(lib2$lib), "\n")
 
   #lib3 = create_SL_lib(nc, type=type, xgb=F, glm=glm, rf=F, cf=F, earth=F, knn=F, glmnet=F, gam=F, detailed_names = T, extra_libs = list("SL.glmnet", extra_libs))
@@ -337,10 +337,10 @@ cumulative_library_seq = function(data_dims,
   # Full library.
   lib9 = create_SL_lib(nc, type=type, xgb=T, glm=glm, rf=T, cf=T, earth=F, knn=F, glmnet=T, glmnet_size=11, gam=F, detailed_names = T)
 
-  #libs = list(lib1, lib2, lib3, lib4, lib5, lib6, lib7, lib8, lib9)
+  libs = list(lib0, lib1, lib2, lib3, lib4, lib5, lib6, lib7, lib8, lib9)
   #libs = list(lib0, lib1, lib2, lib3, lib4, lib5, lib7, lib8, lib9)
   #libs = list(lib0, lib1, lib3, lib4, lib5, lib7, lib8, lib9)
-  libs = list(lib0, lib1, lib3, lib4, lib5, lib7, lib8)
+  #libs = list(lib0, lib1, lib3, lib4, lib5, lib7, lib8)
   if (!glm) {
     cat("Removing GLM from all libraries.")
     libs = lapply(libs, FUN=function(x) {
