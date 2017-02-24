@@ -17,7 +17,7 @@ conf = list(verbose = F,
 ```{r predict-setup}
 
 # Setup multinode/multicore processing if available.
-conf$cluster = ckTools::parallelize(allow_multinode = T)
+conf$cluster = ck37r::parallelize(allow_multinode = T)
 
 #conf$method = "method.AUC"
 conf$method = "method.NNLS"
@@ -37,7 +37,7 @@ if (is.null(conf$cluster) || is.na(conf$cluster)) {
   # Manually change this to F to force non-parallel SuperLearner.
   if (T) {
     # Multicore version.
-    conf$sl_fn = ckTools::gen_superlearner(parallel = "multicore",
+    conf$sl_fn = ck37r::gen_superlearner(parallel = "multicore",
                    outer_cv_folds = conf$outer_cv_folds)[[fn]]
   } else {
     # Sequential version.
@@ -46,7 +46,7 @@ if (is.null(conf$cluster) || is.na(conf$cluster)) {
   rm(fn)
 } else {
   # Multinode version.
-  conf$sl_fn = ckTools::gen_superlearner(parallel = "snow",
+  conf$sl_fn = ck37r::gen_superlearner(parallel = "snow",
                   cluster = conf$cluster,
                   outer_cv_folds = conf$outer_cv_folds)$cv_sl_fn
 }
@@ -114,5 +114,5 @@ save(analyze_results, file=paste0(conf$data_dir, "/predict-indiv-analysis.RData"
 ```
 
 ```{r cleanup}
-ckTools::stop_cluster(conf$cluster)
+ck37r::stop_cluster(conf$cluster)
 ```

@@ -6,7 +6,9 @@ load_all_packages = function(auto_install = F, update = F) {
   # Output R version so we know which package versions we're using.
   cat(R.version.string, "\n")
 
-  libs = c("arm", "arules", "bartMachine", "caret", "ckTools", "class", "cvAUC",
+  libs = c("arm", "arules",
+          # "bartMachine",
+           "caret", "class", "cvAUC",
            "cvTools", "doMC", "doParallel", "doSNOW", "dplyr", "e1071", "earth",
            "foreach", "foreign", "gam", "gbm", "ggplot2", "glmnet", "gplots", "haven",
            "histogram", "hopach", "ipred", "MASS", "multtest", "parallel", "party",
@@ -46,11 +48,13 @@ load_all_packages = function(auto_install = F, update = F) {
 
     # Install ckTools and varImpact, and we need the latest SuperLearner from github.
     if (auto_install) {
-      devtools::install_github(c("ecpolley/SuperLearner", "ck37/ckTools", "ck37/varImpact"),
-                             dependencies=T)
+      devtools::install_github(c("ecpolley/SuperLearner", "ck37/ck37r", "ck37/varImpact"))
     }
 
-    ckTools::load_packages(libs, auto_install, update)
+    invisible(sapply(c("SuperLearner", "ck37r", "varImpact"),
+                     require, character.only = T))
+
+    ck37r::load_packages(libs, auto_install, update, verbose = verbose)
   }) #suppressMessages
 }
 

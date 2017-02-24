@@ -141,7 +141,7 @@ raw_dataset = list(X = data, outcomes = outcome_df)
 # a few lines up.
 # This should not generate any warnings, but if it does then there are probably
 # character columns remaining that need to be resolved.
-data = ckTools::impute_missing_values(data, add_indicators = T)
+data = ck37r::impute_missing_values(data, add_indicators = T)
 dim(data)
 
 # Remove zero variance (constant) and near-zero-variance columns.
