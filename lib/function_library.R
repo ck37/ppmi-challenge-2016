@@ -2,9 +2,14 @@
 #'
 #' @param auto_install Install any packages that could not be loaded.
 #' @param update Update any packages that can be updated.
-load_all_packages = function(auto_install = F, update = F) {
+#' @param java_mem Amount of RAM to allocate to rJava; must happen before
+#'   library is loaded.
+load_all_packages = function(auto_install = F, update = F, java_mem = "4g", verbose = F) {
   # Output R version so we know which package versions we're using.
   cat(R.version.string, "\n")
+
+  # Allocate 4GB to Java for bartMachine; needs to happen before we load rJava library.
+  options(java.parameters = paste0("-Xmx", java_mem))
 
   libs = c("arm", "arules",
           # "bartMachine",
@@ -16,17 +21,16 @@ load_all_packages = function(auto_install = F, update = F) {
            "rJava", "reader", "readstata13", "readxl", "ROCR", "rpart", "SparseM",
            "SuperLearner", "tidyr", "tmle", "xgboost", "xtable", "varImpact")
 
-  # Hide the huge amount of startup message text.
-  suppressMessages({
+  # Code is not yet run. We run afterward, possibly with messages suppressed.
+  expression = quote({
 
     # NOTE: may want to install the latest xgboost from github.
     # Can run this manually:
     if (!require("xgboost") && auto_install) {
-      if (!require("drat") && auto_install) {
-        install.packages("drat")
-      }
-      drat:::addRepo("dmlc")
-      install.packages("xgboost", repos="http://dmlc.ml/drat/", type = "source")
+      if (verbose) cat("No xgboost detected - installing.\n")
+      install.packages("xgboost",
+                       repos=c("http://dmlc.ml/drat/", getOption("repos")),
+                       type="source")
     }
 
     # Install devtools if we don't already have it.
@@ -48,14 +52,26 @@ load_all_packages = function(auto_install = F, update = F) {
 
     # Install ckTools and varImpact, and we need the latest SuperLearner from github.
     if (auto_install) {
-      devtools::install_github(c("ecpolley/SuperLearner", "ck37/ck37r", "ck37/varImpact"))
+      devtools::install_github(c("ecpolley/SuperLearner",
+                                 "ck37/ck37r",
+                                 "ck37/varImpact"))
     }
 
     invisible(sapply(c("SuperLearner", "ck37r", "varImpact"),
                      require, character.only = T))
 
     ck37r::load_packages(libs, auto_install, update, verbose = verbose)
-  }) #suppressMessages
+
+  }) # end quote()
+
+  # Now run the stored code either directly or with messages suppressed.
+  if (verbose) {
+    # Allow messages to be output.
+    eval(expression)
+  } else {
+    # Supress messages.
+    suppressMessages(eval(expression))
+  }
 }
 
 #' Import all CSV files in a given directory and save them to a list.
