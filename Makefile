@@ -19,8 +19,8 @@ endif
 # e.g. we run in BASH: "export QOS=biostat_normal"
 ifndef QOS
 	# Choose one QOS and comment out the other, or use environmental variables.
-	#QOS=biostat_normal
-	QOS=savio_lowprio
+	QOS=biostat_savio2_normal
+	#QOS=savio_lowprio
 endif
 
 SBATCH=sbatch -A ${ACCOUNT} -p ${PARTITION} --qos ${QOS}

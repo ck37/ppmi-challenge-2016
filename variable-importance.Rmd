@@ -114,12 +114,16 @@ if (F) {
 vim = try(
   varImpact(Y_raw, X_raw, V=V, g.library=g_lib, Q.library=Q_lib,
   #varImpact(Y, X, V=V, g.library=g_lib, Q.library=Q_lib,
-            parallel = F, minCell=minCell, family = "gaussian",
+            parallel = T, minCell=minCell, family = "gaussian",
             minYs = minYs, verbose=conf$verbose)
 )
 if (class(vim) == "try-error") {
   cat("Error in vim estimation :/\n")
 } else {
+
+  save(vim, conf, dataset, raw_dataset,
+     file = paste0(conf$data_dir, "/varimpact_analysis.RData"))
+
   print(vim$time)
   print(vim)
   print(dim(vim$results_consistent))
@@ -143,8 +147,8 @@ if (class(vim) == "try-error") {
   file = paste0(paste(conf$tex_dir, "vim_", sep = "/"), "varimpConsistent.tex")
   print(xtable::xtable(consistent_table,
               caption = "Subset of of Significant and ``Consistent'' Results",
-              label = "consisRes",
-              digits = c(0, 0, 0, 0, 2, 4)),
+              label = "consisRes"),
+    #          digits = c(0, 0, 0, 0, 2, 4)),
         type = "latex",
         file = file,
         caption.placement = "top",
@@ -164,8 +168,6 @@ if (class(vim) == "try-error") {
   if (!require(openxlsx)) install.packages("openxlsx")
   openxlsx::write.xlsx(consistent_table, file="output/vim-consistent-table.xlsx")
   
-  save(vim, conf, dataset, raw_dataset,
-     file = paste0(conf$data_dir, "/varimpact_analysis.RData"))
 }
 ```
 
